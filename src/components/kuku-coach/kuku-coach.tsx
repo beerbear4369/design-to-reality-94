@@ -25,15 +25,17 @@ export function KukuCoach() {
         </h2>
         
         {/* Voice visualization replaces the avatar image when recording */}
-        {isRecording ? (
-          <VoiceVisualization isRecording={isRecording} audioLevel={audioLevel} />
-        ) : (
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets/a446e2559c0b414e97e3b81441144c5b/2da989af12aaca64ff6247e588a7a161cb9a4618?placeholderIfAbsent=true"
-            alt="AI Coach Avatar"
-            className="aspect-[0.93] object-contain w-full self-stretch mt-[23px]"
-          />
-        )}
+        <div className="mt-[23px] w-full">
+          {isRecording ? (
+            <VoiceVisualization isRecording={isRecording} audioLevel={audioLevel} />
+          ) : (
+            <img
+              src="https://cdn.builder.io/api/v1/image/assets/a446e2559c0b414e97e3b81441144c5b/2da989af12aaca64ff6247e588a7a161cb9a4618?placeholderIfAbsent=true"
+              alt="AI Coach Avatar"
+              className="aspect-[0.93] object-contain w-full self-stretch"
+            />
+          )}
+        </div>
         
         <AIMessage 
           message={

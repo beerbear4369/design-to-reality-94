@@ -58,7 +58,14 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
       const average = sum / dataArray.length / 255;
       
       if (isMounted) {
-        setAudioLevel(average);
+        // Apply a smoother transition and enhance low sounds
+        setAudioLevel(prev => {
+          // Apply non-linear scaling to make visualization more responsive at lower volumes
+          const enhancedLevel = Math.pow(average, 0.5); // Square root to boost lower levels
+          
+          // Smoothly blend current and previous values
+          return prev * 0.6 + enhancedLevel * 0.4;
+        });
       }
       
       animationFrameRef.current = requestAnimationFrame(processAudioLevel);
@@ -75,9 +82,10 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
           const audioContext = new AudioContext();
           audioContextRef.current = audioContext;
           
-          // Create analyser
+          // Create analyser with higher FFT size for better resolution
           const analyser = audioContext.createAnalyser();
-          analyser.fftSize = 256;
+          analyser.fftSize = 1024; // Increased from 256 for higher resolution
+          analyser.smoothingTimeConstant = 0.6; // Add smoothing (0-1)
           analyserRef.current = analyser;
           
           // Connect the microphone to the analyser
