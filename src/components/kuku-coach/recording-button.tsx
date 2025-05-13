@@ -1,3 +1,4 @@
+
 import * as React from "react";
 
 interface RecordingButtonProps {
@@ -8,7 +9,7 @@ interface RecordingButtonProps {
 export function RecordingButton({ isRecording, onClick }: RecordingButtonProps) {
   return (
     <button
-      className="bg-[rgba(50,44,164,1)] flex w-20 flex-col overflow-hidden items-center justify-center h-20 mt-2 px-4 rounded-[40px] focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+      className="bg-[rgba(50,44,164,1)] flex w-20 flex-col overflow-hidden items-center justify-center h-20 mt-2 px-4 rounded-[40px] focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-transform hover:scale-105"
       onClick={onClick}
       aria-label={isRecording ? "Stop recording" : "Start recording"}
       aria-pressed={isRecording}
