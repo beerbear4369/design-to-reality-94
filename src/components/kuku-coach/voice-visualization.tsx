@@ -6,6 +6,43 @@ import {
   generateDynamicWavePath
 } from "./audio-wave-generator";
 
+// Add new asymmetric wave generator function
+const generateAsymmetricWavePath = (
+  baseY: number,
+  amplitude: number,
+  frequency: number = 0.3,
+  phaseOffset: number = 0,
+  leftAmplifier: number = 1.5, // Higher amplitude on left side
+  width: number = 200,
+  segments: number = 40
+) => {
+  const segmentWidth = width / segments;
+  
+  let path = `M 20 ${baseY}`;
+  
+  for (let i = 0; i <= segments; i++) {
+    const x = 20 + i * segmentWidth;
+    
+    // Position in the wave (0-1 range)
+    const pos = i / segments;
+    
+    // Apply asymmetric amplitude - higher on left, lower on right
+    const amplitudeModifier = leftAmplifier * (1 - Math.pow(pos, 0.8)) + 0.4 * Math.pow(pos, 1.2);
+    
+    // Fewer wavelets by using a lower frequency with position-based adjustment
+    const frequencyModifier = 0.8 - 0.3 * pos; // Frequency decreases from left to right
+    
+    // Calculate wave with asymmetric properties
+    const y = baseY + Math.sin(i * frequency * frequencyModifier + phaseOffset) * (amplitude * amplitudeModifier);
+    
+    path += ` L ${x} ${y}`;
+  }
+  
+  path += ` L 220 ${baseY}`;
+  
+  return path;
+};
+
 interface Image1Props {
   src?: string;
   alt?: string;
@@ -50,6 +87,7 @@ export function VoiceVisualization({
     wave1: 0,
     wave2: Math.PI / 3,
     wave3: (2 * Math.PI) / 3,
+    wave4: Math.PI / 6, // New phase for fourth wave
   });
   
   // Animation effect that runs when recording status or audio level changes
@@ -57,52 +95,55 @@ export function VoiceVisualization({
     if (isRecording) {
       // Scale audio level non-linearly for better visual response
       const scaledAudioLevel = audioLevel < 0.1 
-        ? audioLevel * 3 
-        : 0.3 + (audioLevel * 0.5);
+        ? audioLevel * 3.5 
+        : 0.35 + (audioLevel * 0.7); // Reduced scaling for less extreme amplitude
       
-      // Target amplitude based on scaled audio level (0-40)
-      const targetAmplitude = Math.min(scaledAudioLevel * 40, 40);
+      // Target amplitude based on scaled audio level (0-60) - Reduced from 70 to 60 to prevent clipping
+      const targetAmplitude = Math.min(scaledAudioLevel * 60, 60);
       
       const animateWaves = () => {
-        // Slower time offset for calmer wave movement
-        setTimeOffset(prev => prev + 0.02);
+        // Slower time offset for calmer wave movement - reduced by 50%
+        setTimeOffset(prev => prev + 0.01); // Reduced from 0.02
         
-        // Create dynamic phase update speeds based on frequency content
-        const lowImpact = Math.pow(frequencyData.low, 0.5) * 0.005 + 0.005;
-        const midImpact = Math.pow(frequencyData.mid, 0.5) * 0.01 + 0.007;
-        const highImpact = Math.pow(frequencyData.high, 0.5) * 0.02 + 0.01;
+        // Create dynamic phase update speeds - reduced by ~40-50% for slower movement
+        const lowImpact = Math.pow(frequencyData.low, 0.5) * 0.006 + 0.004;   // Reduced from 0.012
+        const midImpact = Math.pow(frequencyData.mid, 0.5) * 0.012 + 0.007;   // Reduced from 0.020
+        const highImpact = Math.pow(frequencyData.high, 0.5) * 0.018 + 0.01;  // Reduced from 0.030
+        const overallImpact = Math.pow(frequencyData.overall, 0.5) * 0.01 + 0.006; // Reduced from 0.018
         
-        // Update wave phases - now only 3 waves with more distinct behaviors
+        // Update wave phases - now with 4 waves with distinct behaviors
         setWavePhases(prev => ({
-          wave1: prev.wave1 + lowImpact * 1.5,         // Primarily responds to bass/low frequencies
-          wave2: prev.wave2 + midImpact * 1.2,         // Primarily responds to mid-range frequencies
-          wave3: prev.wave3 + highImpact * 0.9,        // Primarily responds to high frequencies
+          wave1: prev.wave1 + lowImpact * 1.5,          // Primarily responds to bass/low frequencies
+          wave2: prev.wave2 + midImpact * 1.2,          // Primarily responds to mid-range frequencies
+          wave3: prev.wave3 + highImpact * 0.9,         // Primarily responds to high frequencies
+          wave4: prev.wave4 + overallImpact * 1.0,      // New wave responds to overall energy
         }));
         
         // Smoothly animate towards the target amplitude
         setWaveAmplitude(prev => {
           if (Math.abs(prev - targetAmplitude) < 0.5) return targetAmplitude;
-          const rate = prev < targetAmplitude ? 0.15 : 0.05;
+          const rate = prev < targetAmplitude ? 0.2 : 0.08; // Faster rates for more responsive animation
           return prev + (targetAmplitude - prev) * rate;
         });
         
-        // Slow down animation frame rate
+        // Slow down animation frame rate - increased from 33ms to 50ms (slower framerate)
         animationRef.current = setTimeout(() => {
           requestAnimationFrame(animateWaves);
-        }, 33) as unknown as number;
+        }, 50) as unknown as number;
       };
       
       animateWaves();
     } else {
       // When not recording, smoothly fade out
       const fadeOut = () => {
-        setTimeOffset(prev => prev + 0.01);
+        setTimeOffset(prev => prev + 0.005); // Reduced from 0.01 for slower movement
         
-        // Slower phase changes during fade out - with just 3 waves
+        // Slower phase changes during fade out - halved all values
         setWavePhases(prev => ({
-          wave1: prev.wave1 + 0.005,
-          wave2: prev.wave2 + 0.007,
-          wave3: prev.wave3 + 0.009,
+          wave1: prev.wave1 + 0.0025,
+          wave2: prev.wave2 + 0.0035,
+          wave3: prev.wave3 + 0.0045,
+          wave4: prev.wave4 + 0.003, // New wave phase update during fade out
         }));
         
         // Slower fade out rate
@@ -112,10 +153,11 @@ export function VoiceVisualization({
           return newValue;
         });
         
+        // Slower fade out animation frame rate
         if (waveAmplitude > 0.1) {
           animationRef.current = setTimeout(() => {
             requestAnimationFrame(fadeOut);
-          }, 33) as unknown as number;
+          }, 50) as unknown as number; // Increased from 33ms to 50ms
         }
       };
       
@@ -130,15 +172,17 @@ export function VoiceVisualization({
     };
   }, [isRecording, audioLevel, frequencyData]);
 
-  // Calculate frequency-based amplitude modifiers
-  const lowFreqAmplitude = frequencyData.low * 1.0;
-  const midFreqAmplitude = frequencyData.mid * 0.8;
-  const highFreqAmplitude = frequencyData.high * 0.6;
+  // Calculate frequency-based amplitude modifiers with greater differentiation
+  const lowFreqAmplitude = frequencyData.low * 1.8;      // Increased from 1.2
+  const midFreqAmplitude = frequencyData.mid * 1.6;      // Increased from 1.0
+  const highFreqAmplitude = frequencyData.high * 1.4;    // Increased from 0.8
+  const overallFreqAmplitude = frequencyData.overall * 2.0; // Increased from 1.4
 
-  // Calculate dynamic frequency multipliers
-  const lowFreqMult = 0.85 + frequencyData.low * 0.3;
-  const midFreqMult = 0.9 + frequencyData.mid * 0.4;
-  const highFreqMult = 1.0 + frequencyData.high * 0.7;
+  // Calculate dynamic frequency multipliers with greater range
+  const lowFreqMult = 0.7 + frequencyData.low * 0.6;        // Modified from 0.8 + 0.4
+  const midFreqMult = 0.8 + frequencyData.mid * 0.8;        // Modified from 0.9 + 0.6
+  const highFreqMult = 0.9 + frequencyData.high * 1.2;      // Modified from 1.0 + 0.9
+  const overallFreqMult = 0.6 + frequencyData.overall * 0.8; // Modified from 0.7 + 0.5
 
   return (
     <div className="relative w-full flex justify-center items-center mt-4">
@@ -153,17 +197,35 @@ export function VoiceVisualization({
           fill="none"
           className="absolute top-0 left-0 w-full max-w-[240px] h-auto"
         >
-          <mask id="mask0_316_1437" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="20" y="20" width="200" height="200">
-            <circle cx="120" cy="120" r="100" fill="url(#paint6_radial_316_1437)" />
+          {/* Further increased mask size to ensure waves aren't chopped */}
+          <mask id="mask0_316_1437" style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="5" y="5" width="230" height="230">
+            <circle cx="120" cy="120" r="115" fill="url(#paint6_radial_316_1437)" />
           </mask>
           <g mask="url(#mask0_316_1437)">
-            {/* Wave 1: Low frequency responsive wave (purple) */}
+            {/* New Wave 4: Asymmetric wave with higher peaks on left (teal) */}
+            <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter3_di_316_1437)">
+              <path
+                d={generateAsymmetricWavePath(
+                  120, 
+                  // Apply more conservative safety factor
+                  Math.min(waveAmplitude * (1.1 + overallFreqAmplitude * 0.7), 85),
+                  0.18 * overallFreqMult,
+                  timeOffset + wavePhases.wave4,
+                  2.2, // Reduced from 2.5 to ensure it stays in bounds
+                )}
+                fill="url(#paint7_radial_316_1437)"
+                shapeRendering="crispEdges"
+              />
+            </g>
+            
+            {/* Wave 1: Low frequency responsive wave (purple) - more exaggerated */}
             <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter5_di_316_1437)">
               <path
                 d={generateSmoothWavePath(
                   120, 
-                  waveAmplitude * (0.8 + lowFreqAmplitude * 0.4), 
-                  0.25 * lowFreqMult,
+                  // Apply more conservative safety factor
+                  Math.min(waveAmplitude * (1.3 + lowFreqAmplitude * 0.7), 85),
+                  0.22 * lowFreqMult,
                   timeOffset + wavePhases.wave1
                 )}
                 fill="url(#paint11_radial_316_1437)"
@@ -171,15 +233,16 @@ export function VoiceVisualization({
               />
             </g>
             
-            {/* Wave 2: Mid-frequency responsive wave (blue) */}
+            {/* Wave 2: Mid-frequency responsive wave (blue) - greater range */}
             <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter4_dif_316_1437)">
               <path
                 d={generateComplexWavePath(
                   120, 
-                  waveAmplitude * (0.7 + midFreqAmplitude * 0.3),
-                  waveAmplitude * (0.2 + midFreqAmplitude * 0.2),
-                  0.6 * midFreqMult,
-                  1.0 * midFreqMult,
+                  // Apply more conservative safety factor
+                  Math.min(waveAmplitude * (1.1 + midFreqAmplitude * 0.6), 85),
+                  Math.min(waveAmplitude * (0.4 + midFreqAmplitude * 0.3), 35),
+                  0.65 * midFreqMult,
+                  1.3 * midFreqMult,
                   timeOffset + wavePhases.wave2
                 )}
                 fill="url(#paint9_radial_316_1437)"
@@ -187,15 +250,16 @@ export function VoiceVisualization({
               />
             </g>
             
-            {/* Wave 3: High-frequency responsive wave (cyan) */}
+            {/* Wave 3: High-frequency responsive wave (cyan) - increased response to high frequencies */}
             <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter3_di_316_1437)">
               <path
                 d={generateDynamicWavePath(
                   120, 
-                  waveAmplitude * (0.6 + highFreqAmplitude * 0.4),
-                  frequencyData.low,
-                  frequencyData.mid,
-                  frequencyData.high,
+                  // Apply more conservative safety factor
+                  Math.min(waveAmplitude * (0.9 + highFreqAmplitude * 0.8), 85),
+                  frequencyData.low * 0.7,
+                  frequencyData.mid * 1.4,
+                  frequencyData.high * 1.8,
                   timeOffset + wavePhases.wave3
                 )}
                 fill="url(#paint7_radial_316_1437)"
