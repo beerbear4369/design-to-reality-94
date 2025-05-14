@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { 
   generateSiriWavePath, 
@@ -31,57 +32,45 @@ export function VoiceVisualization({
   const [timeOffset, setTimeOffset] = React.useState(0);
   const [wavePhases, setWavePhases] = React.useState({
     wave1: 0,
-    wave2: Math.PI / 4,
-    wave3: Math.PI / 2,
-    wave4: (3 * Math.PI) / 4,
-    wave5: Math.PI,
-    wave6: (5 * Math.PI) / 4,
+    wave2: Math.PI / 3,
+    wave3: (2 * Math.PI) / 3,
   });
   
   // Animation effect that runs when recording status or audio level changes
   React.useEffect(() => {
     if (isRecording) {
       // Scale audio level non-linearly for better visual response
-      // Values < 0.1 will be boosted more significantly, but with reduced scaling overall
       const scaledAudioLevel = audioLevel < 0.1 
-        ? audioLevel * 3 // Reduced from 4 to 3
-        : 0.3 + (audioLevel * 0.5); // Reduced from 0.4 + 0.6 to 0.3 + 0.5
+        ? audioLevel * 3 
+        : 0.3 + (audioLevel * 0.5);
       
-      // Target amplitude based on scaled audio level (0-1)
-      // Scale it up for visual impact (0-40) - reduced from 50 to 40
+      // Target amplitude based on scaled audio level (0-40)
       const targetAmplitude = Math.min(scaledAudioLevel * 40, 40);
       
       const animateWaves = () => {
-        // Reduce time offset increment for slower wave movement
-        // Changed from 0.05 to 0.02
+        // Slower time offset for calmer wave movement
         setTimeOffset(prev => prev + 0.02);
         
         // Create dynamic phase update speeds based on frequency content
-        // Reduced all values by ~50% for slower movement
-        const lowImpact = Math.pow(frequencyData.low, 0.5) * 0.005 + 0.005;  // 0.005-0.01 (was 0.01-0.02)
-        const midImpact = Math.pow(frequencyData.mid, 0.5) * 0.01 + 0.007; // 0.007-0.017 (was 0.015-0.035)
-        const highImpact = Math.pow(frequencyData.high, 0.5) * 0.02 + 0.01; // 0.01-0.03 (was 0.02-0.06)
+        const lowImpact = Math.pow(frequencyData.low, 0.5) * 0.005 + 0.005;
+        const midImpact = Math.pow(frequencyData.mid, 0.5) * 0.01 + 0.007;
+        const highImpact = Math.pow(frequencyData.high, 0.5) * 0.02 + 0.01;
         
-        // Update wave phases dynamically based on frequency content
+        // Update wave phases - now only 3 waves with more distinct behaviors
         setWavePhases(prev => ({
-          wave1: prev.wave1 + midImpact + lowImpact, // Mid+low sensitive
-          wave2: prev.wave2 + highImpact + midImpact * 0.5, // High+mid sensitive
-          wave3: prev.wave3 + lowImpact * 2 + midImpact * 0.5, // Mostly low sensitive
-          wave4: prev.wave4 + midImpact + highImpact * 0.5, // Mid+high sensitive
-          wave5: prev.wave5 + highImpact * 1.5, // Very high sensitive
-          wave6: prev.wave6 + lowImpact + midImpact * 0.2 + highImpact * 0.1, // Balanced
+          wave1: prev.wave1 + lowImpact * 1.5,         // Primarily responds to bass/low frequencies
+          wave2: prev.wave2 + midImpact * 1.2,         // Primarily responds to mid-range frequencies
+          wave3: prev.wave3 + highImpact * 0.9,        // Primarily responds to high frequencies
         }));
         
-        // Smoothly animate towards the target amplitude with slower rates
-        // Reduced rate values for smoother transitions
+        // Smoothly animate towards the target amplitude
         setWaveAmplitude(prev => {
           if (Math.abs(prev - targetAmplitude) < 0.5) return targetAmplitude;
-          // Slower rates for both increase and decrease
-          const rate = prev < targetAmplitude ? 0.15 : 0.05; // Reduced from 0.3/0.1 to 0.15/0.05
+          const rate = prev < targetAmplitude ? 0.15 : 0.05;
           return prev + (targetAmplitude - prev) * rate;
         });
         
-        // Slow down animation frame rate (approximately 33ms between frames instead of ~16ms)
+        // Slow down animation frame rate
         animationRef.current = setTimeout(() => {
           requestAnimationFrame(animateWaves);
         }, 33) as unknown as number;
@@ -89,30 +78,25 @@ export function VoiceVisualization({
       
       animateWaves();
     } else {
-      // When not recording, smoothly return to zero with a nice fade out effect
+      // When not recording, smoothly fade out
       const fadeOut = () => {
-        // Slower time movement for fade out
-        setTimeOffset(prev => prev + 0.01); // Reduced from 0.02 to 0.01
+        setTimeOffset(prev => prev + 0.01);
         
-        // Slower phase changes during fade out
+        // Slower phase changes during fade out - with just 3 waves
         setWavePhases(prev => ({
-          wave1: prev.wave1 + 0.005, // Reduced from 0.01
-          wave2: prev.wave2 + 0.007, // Reduced from 0.015
-          wave3: prev.wave3 + 0.009, // Reduced from 0.0175
-          wave4: prev.wave4 + 0.006, // Reduced from 0.0125
-          wave5: prev.wave5 + 0.01,  // Reduced from 0.02
-          wave6: prev.wave6 + 0.005, // Reduced from 0.011
+          wave1: prev.wave1 + 0.005,
+          wave2: prev.wave2 + 0.007,
+          wave3: prev.wave3 + 0.009,
         }));
         
-        // Slower fade out rate for more gradual transition
+        // Slower fade out rate
         setWaveAmplitude(prev => {
-          const newValue = prev * 0.97; // Slower fade-out (was 0.95)
+          const newValue = prev * 0.97;
           if (newValue < 0.1) return 0;
           return newValue;
         });
         
         if (waveAmplitude > 0.1) {
-          // Use setTimeout to slow down the animation frame rate
           animationRef.current = setTimeout(() => {
             requestAnimationFrame(fadeOut);
           }, 33) as unknown as number;
@@ -124,22 +108,21 @@ export function VoiceVisualization({
     
     return () => {
       if (animationRef.current) {
-        // Clean up correctly whether we're using setTimeout or requestAnimationFrame
         clearTimeout(animationRef.current as unknown as number);
         cancelAnimationFrame(animationRef.current);
       }
     };
   }, [isRecording, audioLevel, frequencyData]);
 
-  // Calculate frequency-based amplitude modifiers with reduced values
-  const lowFreqAmplitude = frequencyData.low * 1.0; // Reduced from 1.2
-  const midFreqAmplitude = frequencyData.mid * 0.8; // Reduced from 1.0
-  const highFreqAmplitude = frequencyData.high * 0.6; // Reduced from 0.8
+  // Calculate frequency-based amplitude modifiers
+  const lowFreqAmplitude = frequencyData.low * 1.0;
+  const midFreqAmplitude = frequencyData.mid * 0.8;
+  const highFreqAmplitude = frequencyData.high * 0.6;
 
-  // Calculate dynamic frequency multipliers with reduced ranges
-  const lowFreqMult = 0.85 + frequencyData.low * 0.3; // 0.85-1.15x (was 0.8-1.2x)
-  const midFreqMult = 0.9 + frequencyData.mid * 0.4;  // 0.9-1.3x (was 0.9-1.5x)
-  const highFreqMult = 1.0 + frequencyData.high * 0.7; // 1.0-1.7x (was 1.0-2.0x)
+  // Calculate dynamic frequency multipliers
+  const lowFreqMult = 0.85 + frequencyData.low * 0.3;
+  const midFreqMult = 0.9 + frequencyData.mid * 0.4;
+  const highFreqMult = 1.0 + frequencyData.high * 0.7;
 
   return (
     <div className="relative w-full flex justify-center items-center mt-4">
@@ -169,47 +152,29 @@ export function VoiceVisualization({
           <circle cx="120" cy="120" r="100" fill="url(#paint6_radial_316_1437)" />
         </mask>
         <g mask="url(#mask0_316_1437)">
-          {/* New dynamic wave (cyan) that responds to frequency content */}
-          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter3_di_316_1437)">
+          {/* Wave 1: Low frequency responsive wave (purple) */}
+          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter5_di_316_1437)">
             <path
-              d={generateDynamicWavePath(
+              d={generateSmoothWavePath(
                 120, 
-                waveAmplitude * (0.85 + highFreqAmplitude * 0.15),
-                frequencyData.low,
-                frequencyData.mid,
-                frequencyData.high,
+                waveAmplitude * (0.8 + lowFreqAmplitude * 0.4), 
+                0.25 * lowFreqMult,
                 timeOffset + wavePhases.wave1
               )}
-              fill="url(#paint7_radial_316_1437)"
+              fill="url(#paint11_radial_316_1437)"
               shapeRendering="crispEdges"
             />
           </g>
           
-          {/* Primary Siri-style wave (cyan) with frequency modulation */}
-          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter3_di_316_1437)">
-            <path
-              d={generateSiriWavePath(
-                120, 
-                waveAmplitude * (0.9 + midFreqAmplitude * 0.1), 
-                200, 
-                40, 
-                timeOffset + wavePhases.wave1,
-                midFreqMult // Dynamic frequency multiplier
-              )}
-              fill="url(#paint7_radial_316_1437)"
-              shapeRendering="crispEdges"
-            />
-          </g>
-          
-          {/* Secondary wave with different frequency (blue) */}
+          {/* Wave 2: Mid-frequency responsive wave (blue) */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter4_dif_316_1437)">
             <path
               d={generateComplexWavePath(
                 120, 
-                waveAmplitude * (0.7 + highFreqAmplitude * 0.3), 
-                waveAmplitude * (0.2 + highFreqAmplitude * 0.2),
-                0.6 * highFreqMult, // Frequency modulation
-                1.2 * highFreqMult, // Frequency modulation
+                waveAmplitude * (0.7 + midFreqAmplitude * 0.3),
+                waveAmplitude * (0.2 + midFreqAmplitude * 0.2),
+                0.6 * midFreqMult,
+                1.0 * midFreqMult,
                 timeOffset + wavePhases.wave2
               )}
               fill="url(#paint9_radial_316_1437)"
@@ -217,62 +182,18 @@ export function VoiceVisualization({
             />
           </g>
           
-          {/* Third wave (purple) - modulated by low frequencies */}
-          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter5_di_316_1437)">
+          {/* Wave 3: High-frequency responsive wave (cyan) */}
+          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter3_di_316_1437)">
             <path
-              d={generateSmoothWavePath(
+              d={generateDynamicWavePath(
                 120, 
-                waveAmplitude * (0.6 + lowFreqAmplitude * 0.4), 
-                0.25 * lowFreqMult, // Frequency modulation 
+                waveAmplitude * (0.6 + highFreqAmplitude * 0.4),
+                frequencyData.low,
+                frequencyData.mid,
+                frequencyData.high,
                 timeOffset + wavePhases.wave3
               )}
-              fill="url(#paint11_radial_316_1437)"
-              shapeRendering="crispEdges"
-            />
-          </g>
-          
-          {/* Fourth wave (purple-blue) - with higher frequency */}
-          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter6_di_316_1437)">
-            <path
-              d={generateSiriWavePath(
-                120, 
-                waveAmplitude * (0.5 + midFreqAmplitude * 0.2),
-                200,
-                40,
-                timeOffset + wavePhases.wave4,
-                midFreqMult * 1.2 // Slightly higher frequency multiplier
-              )}
-              fill="url(#paint13_radial_316_1437)"
-              shapeRendering="crispEdges"
-            />
-          </g>
-          
-          {/* Fifth wave (indigo) - responds strongly to high frequencies */}
-          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter7_di_316_1437)">
-            <path
-              d={generateComplexWavePath(
-                120, 
-                waveAmplitude * (0.4 + highFreqAmplitude * 0.6), 
-                waveAmplitude * (0.15 + highFreqAmplitude * 0.2),
-                0.3 * highFreqMult, 
-                0.9 * highFreqMult,
-                timeOffset + wavePhases.wave5
-              )}
-              fill="url(#paint15_radial_316_1437)"
-              shapeRendering="crispEdges"
-            />
-          </g>
-          
-          {/* Base wave (light purple) - always present with subtle movement */}
-          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter8_di_316_1437)">
-            <path
-              d={generateSmoothWavePath(
-                120, 
-                Math.max(2, waveAmplitude * (0.25 + lowFreqAmplitude * 0.15)),  // Always maintain minimum visibility
-                0.2 * lowFreqMult, 
-                timeOffset + wavePhases.wave6
-              )}
-              fill="url(#paint17_radial_316_1437)"
+              fill="url(#paint7_radial_316_1437)"
               shapeRendering="crispEdges"
             />
           </g>
@@ -359,54 +280,6 @@ export function VoiceVisualization({
             <feBlend mode="normal" in2="shape" result="effect2_innerShadow_316_1437" />
           </filter>
           
-          <filter id="filter6_di_316_1437" x="27.0521" y="84" width="213.948" height="82.4978" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-            <feFlood floodOpacity="0" result="BackgroundImageFix" />
-            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
-            <feOffset dy="1" />
-            <feGaussianBlur stdDeviation="4.5" />
-            <feComposite in2="hardAlpha" operator="out" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.664422 0 0 0 0 0.426944 0 0 0 0 0.966667 0 0 0 0.8 0" />
-            <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_316_1437" />
-            <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_316_1437" result="shape" />
-            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
-            <feGaussianBlur stdDeviation="1" />
-            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.900833 0 0 0 0 0.854167 0 0 0 0 1 0 0 0 1 0" />
-            <feBlend mode="normal" in2="shape" result="effect2_innerShadow_316_1437" />
-          </filter>
-          
-          <filter id="filter7_di_316_1437" x="11" y="90.3996" width="213" height="67.4977" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-            <feFlood floodOpacity="0" result="BackgroundImageFix" />
-            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
-            <feOffset dy="1" />
-            <feGaussianBlur stdDeviation="4.5" />
-            <feComposite in2="hardAlpha" operator="out" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.664422 0 0 0 0 0.426944 0 0 0 0 0.966667 0 0 0 0.8 0" />
-            <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_316_1437" />
-            <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_316_1437" result="shape" />
-            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
-            <feGaussianBlur stdDeviation="1" />
-            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.416083 0 0 0 0 0.404167 0 0 0 0 1 0 0 0 1 0" />
-            <feBlend mode="normal" in2="shape" result="effect2_innerShadow_316_1437" />
-          </filter>
-          
-          <filter id="filter8_di_316_1437" x="11" y="104.481" width="218" height="29.5871" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-            <feFlood floodOpacity="0" result="BackgroundImageFix" />
-            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
-            <feOffset dy="1" />
-            <feGaussianBlur stdDeviation="4.5" />
-            <feComposite in2="hardAlpha" operator="out" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.91225 0 0 0 0 0.6625 0 0 0 0 1 0 0 0 0.8 0" />
-            <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_316_1437" />
-            <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_316_1437" result="shape" />
-            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
-            <feGaussianBlur stdDeviation="1" />
-            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.900833 0 0 0 0 0.854167 0 0 0 0 1 0 0 0 1 0" />
-            <feBlend mode="normal" in2="shape" result="effect2_innerShadow_316_1437" />
-          </filter>
-          
           <radialGradient id="paint0_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(120 120) rotate(90) scale(100)">
             <stop stopColor="#312CA3" />
             <stop offset="0.3137" stopColor="#360E69" />
@@ -449,59 +322,14 @@ export function VoiceVisualization({
             <stop offset="1" stopColor="#361D80" />
           </radialGradient>
           
-          <radialGradient id="paint8_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(22 126.747) scale(110.704 1488.41)">
-            <stop offset="0.297404" stopColor="#D1C1FF" stopOpacity="0.52" />
-            <stop offset="1" stopColor="#D1C1FF" stopOpacity="0" />
-          </radialGradient>
-          
           <radialGradient id="paint9_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(119 111.874) rotate(90) scale(41.5947 101.647)">
             <stop stopColor="#2542DD" stopOpacity="0" />
             <stop offset="1" stopColor="#11195F" />
           </radialGradient>
           
-          <radialGradient id="paint10_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(22 119.529) scale(110.227 3430.09)">
-            <stop offset="0.297404" stopColor="#D1C1FF" stopOpacity="0.52" />
-            <stop offset="1" stopColor="#D1C1FF" stopOpacity="0" />
-          </radialGradient>
-          
           <radialGradient id="paint11_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(119.419 123.97) rotate(90) scale(8.92811 102.087)">
             <stop stopColor="#2542DD" stopOpacity="0" />
             <stop offset="1" stopColor="#361D80" />
-          </radialGradient>
-          
-          <radialGradient id="paint12_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(22 125.613) scale(110.704 736.253)">
-            <stop offset="0.297404" stopColor="#D1C1FF" stopOpacity="0.52" />
-            <stop offset="1" stopColor="#D1C1FF" stopOpacity="0" />
-          </radialGradient>
-          
-          <radialGradient id="paint13_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(119.782 126.459) rotate(90) scale(15.4324 102.467)">
-            <stop stopColor="#2542DD" stopOpacity="0" />
-            <stop offset="1" stopColor="#361D80" />
-          </radialGradient>
-          
-          <radialGradient id="paint14_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(22 129.299) scale(111.116 1272.62)">
-            <stop offset="0.297404" stopColor="#D1C1FF" stopOpacity="0.52" />
-            <stop offset="1" stopColor="#D1C1FF" stopOpacity="0" />
-          </radialGradient>
-          
-          <radialGradient id="paint15_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(120 130.149) rotate(-90) scale(2.42212 104.791)">
-            <stop stopColor="#2542DD" stopOpacity="0" />
-            <stop offset="1" stopColor="#11195F" />
-          </radialGradient>
-          
-          <radialGradient id="paint16_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(20 129.704) scale(113.636 199.739)">
-            <stop offset="0.297404" stopColor="#D1C1FF" stopOpacity="0.52" />
-            <stop offset="1" stopColor="#D1C1FF" stopOpacity="0" />
-          </radialGradient>
-          
-          <radialGradient id="paint17_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(113.126 119.969) rotate(90) scale(0.881849 97.5876)">
-            <stop stopColor="#2542DD" stopOpacity="0" />
-            <stop offset="1" stopColor="#361D80" />
-          </radialGradient>
-          
-          <radialGradient id="paint18_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(20 120.131) scale(105.825 72.7214)">
-            <stop offset="0.297404" stopColor="#D1C1FF" stopOpacity="0.52" />
-            <stop offset="1" stopColor="#D1C1FF" stopOpacity="0" />
           </radialGradient>
         </defs>
       </svg>
