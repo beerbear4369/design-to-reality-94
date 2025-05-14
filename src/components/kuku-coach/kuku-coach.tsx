@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { AIMessage } from "./ai-message";
 import { RecordingButton } from "./recording-button";
@@ -14,44 +13,44 @@ export function KukuCoach() {
   };
 
   return (
-    <main className="bg-[rgba(13,13,13,1)] flex max-w-[480px] w-full flex-col overflow-hidden items-center mx-auto py-[70px]">
-      <header className="text-white text-[22px] font-semibold">
+    <main className="bg-black flex max-w-[400px] w-full flex-col overflow-hidden items-center mx-auto py-[40px] min-h-screen">
+      <header className="text-white text-[28px] font-semibold tracking-wide">
         Kuku Coach
       </header>
       
-      <section className="flex flex-col items-center w-full">
-        <h2 className="text-white text-lg font-normal mt-[43px]">
+      <section className="flex flex-col items-center justify-between w-full flex-1">
+        <h2 className="text-white text-lg font-normal mt-[32px] opacity-90">
           Speak to your coach
         </h2>
         
-        {/* Voice visualization replaces the avatar image when recording */}
-        <div className="mt-[23px] w-full">
-          {isRecording ? (
+        {/* Voice visualization - enhanced sizing and positioning */}
+        <div className="w-full flex justify-center mt-[30px]">
+          <div className="w-[300px] h-[300px] relative">
             <VoiceVisualization 
               isRecording={isRecording} 
               audioLevel={audioLevel}
               frequencyData={frequencyData}
             />
-          ) : (
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets/a446e2559c0b414e97e3b81441144c5b/2da989af12aaca64ff6247e588a7a161cb9a4618?placeholderIfAbsent=true"
-              alt="AI Coach Avatar"
-              className="aspect-[0.93] object-contain w-full self-stretch"
-            />
-          )}
+          </div>
         </div>
         
-        <AIMessage 
-          message={
-            error ? 
-              error : 
-              isRecording ? 
-                "I'm listening..." : 
-                "I'm here to help you with your goals. What would you like to discuss today?"
-          } 
-        />
+        {/* Fixed height container for message with improved spacing */}
+        <div className="min-h-[100px] flex items-center justify-center w-full px-6 mt-[20px]">
+          <AIMessage 
+            message={
+              error ? 
+                error : 
+                isRecording ? 
+                  "I'm listening..." : 
+                  "I'm here to help you with your goals.\nWhat would you like to discuss today?"
+            } 
+          />
+        </div>
         
-        <RecordingButton isRecording={isRecording} onClick={toggleRecording} />
+        {/* Recording button with better positioning */}
+        <div className="mb-[50px] mt-[20px]">
+          <RecordingButton isRecording={isRecording} onClick={toggleRecording} />
+        </div>
       </section>
     </main>
   );
