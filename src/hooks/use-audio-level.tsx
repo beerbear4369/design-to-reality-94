@@ -50,21 +50,44 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
       
       // Calculate the average volume level (0-255)
       let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
+      
+      // Enhanced processing: Focus more on mid-range frequencies (human voice range)
+      // This will make visualization more responsive to speech
+      const voiceRangeStart = Math.floor(dataArray.length * 0.05); // Skip lowest frequencies
+      const voiceRangeEnd = Math.floor(dataArray.length * 0.6);    // Skip highest frequencies
+      
+      let count = 0;
+      // Give more weight to the voice frequency range
+      for (let i = voiceRangeStart; i < voiceRangeEnd; i++) {
+        sum += dataArray[i] * 1.5; // Boost the voice range
+        count++;
+      }
+      
+      // Include other frequencies at normal weight
+      for (let i = 0; i < voiceRangeStart; i++) {
         sum += dataArray[i];
+        count++;
+      }
+      for (let i = voiceRangeEnd; i < dataArray.length; i++) {
+        sum += dataArray[i];
+        count++;
       }
       
       // Normalize to 0-1 range
-      const average = sum / dataArray.length / 255;
+      const average = sum / count / 255;
       
       if (isMounted) {
         // Apply a smoother transition and enhance low sounds
         setAudioLevel(prev => {
           // Apply non-linear scaling to make visualization more responsive at lower volumes
-          const enhancedLevel = Math.pow(average, 0.5); // Square root to boost lower levels
+          // Use a cubic root to give more presence to lower levels
+          const enhancedLevel = Math.pow(average, 0.33);
+          
+          // Use different blending rates based on whether audio is increasing or decreasing
+          const blendRate = enhancedLevel > prev ? 0.4 : 0.3; // Faster attack, slower decay
           
           // Smoothly blend current and previous values
-          return prev * 0.6 + enhancedLevel * 0.4;
+          return prev * (1 - blendRate) + enhancedLevel * blendRate;
         });
       }
       
@@ -84,8 +107,8 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
           
           // Create analyser with higher FFT size for better resolution
           const analyser = audioContext.createAnalyser();
-          analyser.fftSize = 1024; // Increased from 256 for higher resolution
-          analyser.smoothingTimeConstant = 0.6; // Add smoothing (0-1)
+          analyser.fftSize = 2048; // Increased for much higher resolution
+          analyser.smoothingTimeConstant = 0.7; // Add more smoothing (0-1)
           analyserRef.current = analyser;
           
           // Connect the microphone to the analyser

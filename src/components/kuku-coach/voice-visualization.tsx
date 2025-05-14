@@ -1,5 +1,10 @@
 
 import * as React from "react";
+import { 
+  generateSiriWavePath, 
+  generateSmoothWavePath, 
+  generateComplexWavePath 
+} from "./audio-wave-generator";
 
 interface VoiceVisualizationProps {
   isRecording: boolean;
@@ -11,21 +16,51 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
   const animationRef = React.useRef<number>();
   const svgRef = React.useRef<SVGSVGElement>(null);
   
-  // Controls for wave animation paths
+  // Animation state
   const [waveAmplitude, setWaveAmplitude] = React.useState(0);
+  const [timeOffset, setTimeOffset] = React.useState(0);
+  const [wavePhases, setWavePhases] = React.useState({
+    wave1: 0,
+    wave2: Math.PI / 4,
+    wave3: Math.PI / 2,
+    wave4: (3 * Math.PI) / 4,
+    wave5: Math.PI,
+    wave6: (5 * Math.PI) / 4,
+  });
   
   // Animation effect that runs when recording status or audio level changes
   React.useEffect(() => {
     if (isRecording) {
-      // Target amplitude based on audio level (0-1)
-      // Scale it up for visual impact (0-40)
-      const targetAmplitude = audioLevel * 40;
+      // Scale audio level non-linearly for better visual response
+      // Values < 0.1 will be boosted more significantly
+      const scaledAudioLevel = audioLevel < 0.1 
+        ? audioLevel * 4 
+        : 0.4 + (audioLevel * 0.6);
+      
+      // Target amplitude based on scaled audio level (0-1)
+      // Scale it up for visual impact (0-50)
+      const targetAmplitude = Math.min(scaledAudioLevel * 50, 50);
       
       const animateWaves = () => {
+        // Update time offset for wave movement even when audio is low
+        setTimeOffset(prev => prev + 0.05);
+        
+        // Update wave phases for varied wave movement
+        setWavePhases(prev => ({
+          wave1: prev.wave1 + 0.02,
+          wave2: prev.wave2 + 0.03,
+          wave3: prev.wave3 + 0.035,
+          wave4: prev.wave4 + 0.025,
+          wave5: prev.wave5 + 0.04,
+          wave6: prev.wave6 + 0.022,
+        }));
+        
         // Smoothly animate towards the target amplitude
         setWaveAmplitude(prev => {
           if (Math.abs(prev - targetAmplitude) < 0.5) return targetAmplitude;
-          return prev + (targetAmplitude - prev) * 0.2; // Smooth easing
+          // Faster increase when amplitude grows, slower decrease for smoother effect
+          const rate = prev < targetAmplitude ? 0.3 : 0.1;
+          return prev + (targetAmplitude - prev) * rate;
         });
         
         animationRef.current = requestAnimationFrame(animateWaves);
@@ -33,10 +68,21 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
       
       animateWaves();
     } else {
-      // When not recording, smoothly return to zero
+      // When not recording, smoothly return to zero with a nice fade out effect
       const fadeOut = () => {
+        setTimeOffset(prev => prev + 0.02); // Keep time moving for smooth transition
+        
+        setWavePhases(prev => ({
+          wave1: prev.wave1 + 0.01,
+          wave2: prev.wave2 + 0.015,
+          wave3: prev.wave3 + 0.0175,
+          wave4: prev.wave4 + 0.0125,
+          wave5: prev.wave5 + 0.02,
+          wave6: prev.wave6 + 0.011,
+        }));
+        
         setWaveAmplitude(prev => {
-          const newValue = prev * 0.9;
+          const newValue = prev * 0.95; // Slightly slower fade-out for elegance
           if (newValue < 0.1) return 0;
           return newValue;
         });
@@ -55,25 +101,6 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
       }
     };
   }, [isRecording, audioLevel]);
-
-  // Generate dynamic wave path based on current amplitude
-  const generateWavePath = (baseY: number, amplitude: number, frequency: number) => {
-    const width = 200;
-    const segments = 20;
-    const segmentWidth = width / segments;
-    
-    let path = `M 20 ${baseY}`;
-    
-    for (let i = 0; i <= segments; i++) {
-      const x = 20 + i * segmentWidth;
-      const y = baseY + Math.sin(i * frequency) * amplitude;
-      path += ` L ${x} ${y}`;
-    }
-    
-    path += ` L 220 ${baseY}`;
-    
-    return path;
-  };
 
   return (
     <div className="relative w-full flex justify-center items-center mt-4">
@@ -103,45 +130,85 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
           <circle cx="120" cy="120" r="100" fill="url(#paint6_radial_316_1437)" />
         </mask>
         <g mask="url(#mask0_316_1437)">
-          {/* Dynamic waveforms based on audio level */}
+          {/* Primary Siri-style wave (cyan) - the main wave that responds to audio the most */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter3_di_316_1437)">
             <path
-              d={generateWavePath(120, waveAmplitude * 0.8, 0.5)}
+              d={generateSiriWavePath(120, waveAmplitude * 0.9, 200, 40, timeOffset + wavePhases.wave1)}
               fill="url(#paint7_radial_316_1437)"
               shapeRendering="crispEdges"
             />
           </g>
+          
+          {/* Secondary wave with different frequency (blue) */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter4_dif_316_1437)">
             <path
-              d={generateWavePath(120, waveAmplitude * 0.6, 0.7)}
+              d={generateComplexWavePath(
+                120, 
+                waveAmplitude * 0.7, 
+                waveAmplitude * 0.2,
+                0.6, 
+                1.2,
+                timeOffset + wavePhases.wave2
+              )}
               fill="url(#paint9_radial_316_1437)"
               shapeRendering="crispEdges"
             />
           </g>
+          
+          {/* Third wave (purple) - slightly lower amplitude */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter5_di_316_1437)">
             <path
-              d={generateWavePath(120, waveAmplitude * 0.9, 0.3)}
+              d={generateSmoothWavePath(
+                120, 
+                waveAmplitude * 0.6, 
+                0.25, 
+                timeOffset + wavePhases.wave3
+              )}
               fill="url(#paint11_radial_316_1437)"
               shapeRendering="crispEdges"
             />
           </g>
+          
+          {/* Fourth wave (purple-blue) - with higher frequency */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter6_di_316_1437)">
             <path
-              d={generateWavePath(121, waveAmplitude * 1.1, 0.4)}
+              d={generateSiriWavePath(
+                120, 
+                waveAmplitude * 0.5,
+                200,
+                40,
+                timeOffset + wavePhases.wave4
+              )}
               fill="url(#paint13_radial_316_1437)"
               shapeRendering="crispEdges"
             />
           </g>
+          
+          {/* Fifth wave (indigo) - with smooth movement */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter7_di_316_1437)">
             <path
-              d={generateWavePath(120, waveAmplitude * 0.7, 0.6)}
+              d={generateComplexWavePath(
+                120, 
+                waveAmplitude * 0.4, 
+                waveAmplitude * 0.15,
+                0.3, 
+                0.9,
+                timeOffset + wavePhases.wave5
+              )}
               fill="url(#paint15_radial_316_1437)"
               shapeRendering="crispEdges"
             />
           </g>
+          
+          {/* Base wave (light purple) - always present with subtle movement */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter8_di_316_1437)">
             <path
-              d={generateWavePath(120, waveAmplitude * 0.5, 0.8)}
+              d={generateSmoothWavePath(
+                120, 
+                Math.max(2, waveAmplitude * 0.25),  // Always maintain minimum visibility
+                0.2, 
+                timeOffset + wavePhases.wave6
+              )}
               fill="url(#paint17_radial_316_1437)"
               shapeRendering="crispEdges"
             />
@@ -318,7 +385,7 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
             <stop offset="1" stopColor="#D9D9D9" stopOpacity="0" />
           </radialGradient>
           
-          {/* More radial gradients */}
+          {/* Wave gradients */}
           <radialGradient id="paint7_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(119.419 123.425) rotate(90) scale(18.0491 102.087)">
             <stop stopColor="#2542DD" stopOpacity="0" />
             <stop offset="1" stopColor="#361D80" />
@@ -339,7 +406,6 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
             <stop offset="1" stopColor="#D1C1FF" stopOpacity="0" />
           </radialGradient>
           
-          {/* More gradients */}
           <radialGradient id="paint11_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(119.419 123.97) rotate(90) scale(8.92811 102.087)">
             <stop stopColor="#2542DD" stopOpacity="0" />
             <stop offset="1" stopColor="#361D80" />
