@@ -7,6 +7,17 @@ interface UseAudioLevelOptions {
 
 export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
   const [audioLevel, setAudioLevel] = React.useState(0);
+  const [frequencyData, setFrequencyData] = React.useState<{
+    low: number;
+    mid: number;
+    high: number;
+    overall: number;
+  }>({
+    low: 0,
+    mid: 0,
+    high: 0,
+    overall: 0
+  });
   const [error, setError] = React.useState<string | null>(null);
   
   const audioContextRef = React.useRef<AudioContext | null>(null);
@@ -48,40 +59,35 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
       analyserRef.current.getByteFrequencyData(dataArray);
       
-      // Calculate the average volume level (0-255)
-      let sum = 0;
+      // Calculate different frequency bands
+      const lowFrequencySum = calculateBandSum(dataArray, 0, 0.1); // 0-10% of spectrum for bass
+      const midFrequencySum = calculateBandSum(dataArray, 0.1, 0.6); // 10-60% for mid-range (speech)
+      const highFrequencySum = calculateBandSum(dataArray, 0.6, 1); // 60-100% for high frequencies
       
-      // Enhanced processing: Focus more on mid-range frequencies (human voice range)
-      // This will make visualization more responsive to speech
-      const voiceRangeStart = Math.floor(dataArray.length * 0.05); // Skip lowest frequencies
-      const voiceRangeEnd = Math.floor(dataArray.length * 0.6);    // Skip highest frequencies
+      // Normalize to 0-1 range with different emphasis for dynamics
+      const lowNormalized = Math.pow(lowFrequencySum / 255, 0.5); // Less compression for bass
+      const midNormalized = Math.pow(midFrequencySum / 255, 0.33); // Cubic root for mids (speech)
+      const highNormalized = Math.pow(highFrequencySum / 255, 0.25); // More compression for high freqs
       
-      let count = 0;
-      // Give more weight to the voice frequency range
-      for (let i = voiceRangeStart; i < voiceRangeEnd; i++) {
-        sum += dataArray[i] * 1.5; // Boost the voice range
-        count++;
-      }
-      
-      // Include other frequencies at normal weight
-      for (let i = 0; i < voiceRangeStart; i++) {
-        sum += dataArray[i];
-        count++;
-      }
-      for (let i = voiceRangeEnd; i < dataArray.length; i++) {
-        sum += dataArray[i];
-        count++;
-      }
-      
-      // Normalize to 0-1 range
-      const average = sum / count / 255;
+      // Calculate overall level with weighted emphasis on mid range (voice)
+      const overallLevel = (lowNormalized * 0.2) + (midNormalized * 0.6) + (highNormalized * 0.2);
       
       if (isMounted) {
-        // Apply a smoother transition and enhance low sounds
+        // Update frequency data object
+        setFrequencyData(prev => {
+          return {
+            // Apply different smoothing for different bands
+            low: prev.low * 0.8 + lowNormalized * 0.2,    // Slower change for bass
+            mid: prev.mid * 0.6 + midNormalized * 0.4,    // Faster for mids (speech)
+            high: prev.high * 0.4 + highNormalized * 0.6, // Faster still for highs
+            overall: prev.overall * 0.7 + overallLevel * 0.3  // Moderate overall smoothing
+          };
+        });
+        
+        // Update the overall audio level with improved dynamics
         setAudioLevel(prev => {
-          // Apply non-linear scaling to make visualization more responsive at lower volumes
-          // Use a cubic root to give more presence to lower levels
-          const enhancedLevel = Math.pow(average, 0.33);
+          // Use a non-linear scaling to make visualization more responsive at lower volumes
+          const enhancedLevel = Math.pow(overallLevel, 0.33);
           
           // Use different blending rates based on whether audio is increasing or decreasing
           const blendRate = enhancedLevel > prev ? 0.4 : 0.3; // Faster attack, slower decay
@@ -92,6 +98,21 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
       }
       
       animationFrameRef.current = requestAnimationFrame(processAudioLevel);
+    };
+    
+    // Helper function to calculate sum for a frequency band
+    const calculateBandSum = (dataArray: Uint8Array, startPercentage: number, endPercentage: number) => {
+      const start = Math.floor(dataArray.length * startPercentage);
+      const end = Math.floor(dataArray.length * endPercentage);
+      let sum = 0;
+      let count = 0;
+      
+      for (let i = start; i < end; i++) {
+        sum += dataArray[i];
+        count++;
+      }
+      
+      return count > 0 ? sum / count : 0;
     };
     
     const setupAudioProcessing = async () => {
@@ -122,6 +143,7 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
           if (isMounted) {
             setError("Error accessing microphone. Please make sure you have granted permission.");
             setAudioLevel(0);
+            setFrequencyData({low: 0, mid: 0, high: 0, overall: 0});
           }
         }
       } else {
@@ -129,6 +151,7 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
         cleanup();
         if (isMounted) {
           setAudioLevel(0);
+          setFrequencyData({low: 0, mid: 0, high: 0, overall: 0});
         }
       }
     };
@@ -143,6 +166,8 @@ export function useAudioLevel({ isRecording }: UseAudioLevelOptions) {
   
   return {
     audioLevel,
+    frequencyData,
     error
   };
 }
+

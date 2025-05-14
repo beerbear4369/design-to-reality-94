@@ -7,7 +7,7 @@ import { useAudioLevel } from "@/hooks/use-audio-level";
 
 export function KukuCoach() {
   const [isRecording, setIsRecording] = React.useState(false);
-  const { audioLevel, error } = useAudioLevel({ isRecording });
+  const { audioLevel, frequencyData, error } = useAudioLevel({ isRecording });
 
   const toggleRecording = () => {
     setIsRecording(!isRecording);
@@ -27,7 +27,11 @@ export function KukuCoach() {
         {/* Voice visualization replaces the avatar image when recording */}
         <div className="mt-[23px] w-full">
           {isRecording ? (
-            <VoiceVisualization isRecording={isRecording} audioLevel={audioLevel} />
+            <VoiceVisualization 
+              isRecording={isRecording} 
+              audioLevel={audioLevel}
+              frequencyData={frequencyData}
+            />
           ) : (
             <img
               src="https://cdn.builder.io/api/v1/image/assets/a446e2559c0b414e97e3b81441144c5b/2da989af12aaca64ff6247e588a7a161cb9a4618?placeholderIfAbsent=true"

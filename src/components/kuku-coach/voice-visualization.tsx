@@ -3,15 +3,26 @@ import * as React from "react";
 import { 
   generateSiriWavePath, 
   generateSmoothWavePath, 
-  generateComplexWavePath 
+  generateComplexWavePath,
+  generateDynamicWavePath
 } from "./audio-wave-generator";
 
 interface VoiceVisualizationProps {
   isRecording: boolean;
   audioLevel: number;
+  frequencyData?: {
+    low: number;
+    mid: number;
+    high: number;
+    overall: number;
+  };
 }
 
-export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisualizationProps) {
+export function VoiceVisualization({ 
+  isRecording, 
+  audioLevel = 0,
+  frequencyData = { low: 0, mid: 0, high: 0, overall: 0 } 
+}: VoiceVisualizationProps) {
   // References to manage animation
   const animationRef = React.useRef<number>();
   const svgRef = React.useRef<SVGSVGElement>(null);
@@ -45,14 +56,19 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
         // Update time offset for wave movement even when audio is low
         setTimeOffset(prev => prev + 0.05);
         
-        // Update wave phases for varied wave movement
+        // Create dynamic phase update speeds based on frequency content
+        const lowImpact = Math.pow(frequencyData.low, 0.5) * 0.01 + 0.01;  // 0.01-0.02
+        const midImpact = Math.pow(frequencyData.mid, 0.5) * 0.02 + 0.015; // 0.015-0.035
+        const highImpact = Math.pow(frequencyData.high, 0.5) * 0.04 + 0.02; // 0.02-0.06
+        
+        // Update wave phases dynamically based on frequency content
         setWavePhases(prev => ({
-          wave1: prev.wave1 + 0.02,
-          wave2: prev.wave2 + 0.03,
-          wave3: prev.wave3 + 0.035,
-          wave4: prev.wave4 + 0.025,
-          wave5: prev.wave5 + 0.04,
-          wave6: prev.wave6 + 0.022,
+          wave1: prev.wave1 + midImpact + lowImpact, // Mid+low sensitive
+          wave2: prev.wave2 + highImpact + midImpact * 0.5, // High+mid sensitive
+          wave3: prev.wave3 + lowImpact * 2 + midImpact * 0.5, // Mostly low sensitive
+          wave4: prev.wave4 + midImpact + highImpact * 0.5, // Mid+high sensitive
+          wave5: prev.wave5 + highImpact * 1.5, // Very high sensitive
+          wave6: prev.wave6 + lowImpact + midImpact * 0.2 + highImpact * 0.1, // Balanced
         }));
         
         // Smoothly animate towards the target amplitude
@@ -100,7 +116,17 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isRecording, audioLevel]);
+  }, [isRecording, audioLevel, frequencyData]);
+
+  // Calculate frequency-based amplitude modifiers
+  const lowFreqAmplitude = frequencyData.low * 1.2; // Boost low frequencies for visibility
+  const midFreqAmplitude = frequencyData.mid * 1.0; // Normal mid frequencies 
+  const highFreqAmplitude = frequencyData.high * 0.8; // Slightly reduce high frequencies
+
+  // Calculate dynamic frequency multipliers based on audio content
+  const lowFreqMult = 0.8 + frequencyData.low * 0.4; // 0.8-1.2x
+  const midFreqMult = 0.9 + frequencyData.mid * 0.6; // 0.9-1.5x
+  const highFreqMult = 1.0 + frequencyData.high * 1.0; // 1.0-2.0x
 
   return (
     <div className="relative w-full flex justify-center items-center mt-4">
@@ -130,10 +156,33 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
           <circle cx="120" cy="120" r="100" fill="url(#paint6_radial_316_1437)" />
         </mask>
         <g mask="url(#mask0_316_1437)">
-          {/* Primary Siri-style wave (cyan) - the main wave that responds to audio the most */}
+          {/* New dynamic wave (cyan) that responds to frequency content */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter3_di_316_1437)">
             <path
-              d={generateSiriWavePath(120, waveAmplitude * 0.9, 200, 40, timeOffset + wavePhases.wave1)}
+              d={generateDynamicWavePath(
+                120, 
+                waveAmplitude * (0.85 + highFreqAmplitude * 0.15),
+                frequencyData.low,
+                frequencyData.mid,
+                frequencyData.high,
+                timeOffset + wavePhases.wave1
+              )}
+              fill="url(#paint7_radial_316_1437)"
+              shapeRendering="crispEdges"
+            />
+          </g>
+          
+          {/* Primary Siri-style wave (cyan) with frequency modulation */}
+          <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter3_di_316_1437)">
+            <path
+              d={generateSiriWavePath(
+                120, 
+                waveAmplitude * (0.9 + midFreqAmplitude * 0.1), 
+                200, 
+                40, 
+                timeOffset + wavePhases.wave1,
+                midFreqMult // Dynamic frequency multiplier
+              )}
               fill="url(#paint7_radial_316_1437)"
               shapeRendering="crispEdges"
             />
@@ -144,10 +193,10 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
             <path
               d={generateComplexWavePath(
                 120, 
-                waveAmplitude * 0.7, 
-                waveAmplitude * 0.2,
-                0.6, 
-                1.2,
+                waveAmplitude * (0.7 + highFreqAmplitude * 0.3), 
+                waveAmplitude * (0.2 + highFreqAmplitude * 0.2),
+                0.6 * highFreqMult, // Frequency modulation
+                1.2 * highFreqMult, // Frequency modulation
                 timeOffset + wavePhases.wave2
               )}
               fill="url(#paint9_radial_316_1437)"
@@ -155,13 +204,13 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
             />
           </g>
           
-          {/* Third wave (purple) - slightly lower amplitude */}
+          {/* Third wave (purple) - modulated by low frequencies */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter5_di_316_1437)">
             <path
               d={generateSmoothWavePath(
                 120, 
-                waveAmplitude * 0.6, 
-                0.25, 
+                waveAmplitude * (0.6 + lowFreqAmplitude * 0.4), 
+                0.25 * lowFreqMult, // Frequency modulation 
                 timeOffset + wavePhases.wave3
               )}
               fill="url(#paint11_radial_316_1437)"
@@ -174,25 +223,26 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
             <path
               d={generateSiriWavePath(
                 120, 
-                waveAmplitude * 0.5,
+                waveAmplitude * (0.5 + midFreqAmplitude * 0.2),
                 200,
                 40,
-                timeOffset + wavePhases.wave4
+                timeOffset + wavePhases.wave4,
+                midFreqMult * 1.2 // Slightly higher frequency multiplier
               )}
               fill="url(#paint13_radial_316_1437)"
               shapeRendering="crispEdges"
             />
           </g>
           
-          {/* Fifth wave (indigo) - with smooth movement */}
+          {/* Fifth wave (indigo) - responds strongly to high frequencies */}
           <g style={{ mixBlendMode: "plus-lighter" }} filter="url(#filter7_di_316_1437)">
             <path
               d={generateComplexWavePath(
                 120, 
-                waveAmplitude * 0.4, 
-                waveAmplitude * 0.15,
-                0.3, 
-                0.9,
+                waveAmplitude * (0.4 + highFreqAmplitude * 0.6), 
+                waveAmplitude * (0.15 + highFreqAmplitude * 0.2),
+                0.3 * highFreqMult, 
+                0.9 * highFreqMult,
                 timeOffset + wavePhases.wave5
               )}
               fill="url(#paint15_radial_316_1437)"
@@ -205,8 +255,8 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
             <path
               d={generateSmoothWavePath(
                 120, 
-                Math.max(2, waveAmplitude * 0.25),  // Always maintain minimum visibility
-                0.2, 
+                Math.max(2, waveAmplitude * (0.25 + lowFreqAmplitude * 0.15)),  // Always maintain minimum visibility
+                0.2 * lowFreqMult, 
                 timeOffset + wavePhases.wave6
               )}
               fill="url(#paint17_radial_316_1437)"
@@ -450,3 +500,4 @@ export function VoiceVisualization({ isRecording, audioLevel = 0 }: VoiceVisuali
     </div>
   );
 }
+

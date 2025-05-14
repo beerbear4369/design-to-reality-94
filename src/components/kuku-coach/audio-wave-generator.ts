@@ -66,10 +66,12 @@ export const generateSiriWavePath = (
   amplitude: number,
   width: number = 200,
   segments: number = 40,
-  timeOffset: number = 0
+  timeOffset: number = 0,
+  freqMultiplier: number = 1.0
 ) => {
   const segmentWidth = width / segments;
-  const frequencies = [1, 2, 3, 4]; // Multiple harmonics for rich wave
+  // Base frequencies with a multiplier to dynamically change frequency
+  const frequencies = [1, 2, 3, 4].map(f => f * freqMultiplier);
   const amplitudeFactors = [1, 0.6, 0.4, 0.2]; // Decreasing amplitude for each harmonic
   
   let path = `M 20 ${baseY}`;
@@ -132,3 +134,62 @@ export const generateSmoothWavePath = (
   
   return path;
 };
+
+/**
+ * Generate a new type of dynamic wave with voice-reactive characteristics
+ */
+export const generateDynamicWavePath = (
+  baseY: number,
+  amplitude: number,
+  lowFreq: number, // 0-1 normalized low frequency energy
+  midFreq: number, // 0-1 normalized mid frequency energy
+  highFreq: number, // 0-1 normalized high frequency energy
+  phaseOffset: number = 0,
+  width: number = 200,
+  segments: number = 40
+) => {
+  const segmentWidth = width / segments;
+  
+  let path = `M 20 ${baseY}`;
+  
+  for (let i = 0; i <= segments; i++) {
+    const x = 20 + i * segmentWidth;
+    
+    // Position in the wave (0-1 range)
+    const pos = i / segments;
+    
+    // Dynamic frequency that changes across the wave
+    // - Lower frequencies on the left
+    // - Mid frequencies in the middle
+    // - Higher frequencies on the right
+    const dynamicFreq = 
+      lowFreq * Math.pow(1 - pos, 2) * 0.8 + // More impact on the left
+      midFreq * (1 - Math.pow(2 * pos - 1, 2)) * 1.0 + // More impact in the middle
+      highFreq * Math.pow(pos, 2) * 1.2; // More impact on the right
+    
+    // Dynamic frequency creates different wave patterns
+    const baseFreq = 0.3 + dynamicFreq * 0.7;
+    
+    // Primary wave with dynamic frequency
+    const primaryWave = Math.sin(i * baseFreq + phaseOffset) * amplitude;
+    
+    // Secondary wave with half the amplitude but twice the frequency
+    const secondaryWave = Math.sin(i * baseFreq * 2 + phaseOffset * 2) * (amplitude * 0.5 * highFreq);
+    
+    // Tertiary wave with one-third amplitude but triple frequency - more affected by high frequencies
+    const tertiaryWave = Math.sin(i * baseFreq * 3 + phaseOffset * 3) * (amplitude * 0.3 * Math.pow(highFreq, 2));
+    
+    // Low-frequency modulation that adds movement to the base of the wave
+    const lowFreqModulation = Math.sin(i * 0.05 + phaseOffset * 0.5) * (amplitude * 0.4 * Math.pow(lowFreq, 2));
+    
+    // Combine all waves with their respective weights
+    const y = baseY + primaryWave + secondaryWave + tertiaryWave + lowFreqModulation;
+    
+    path += ` L ${x} ${y}`;
+  }
+  
+  path += ` L 220 ${baseY}`;
+  
+  return path;
+};
+
