@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { 
   generateSiriWavePath, 
@@ -43,23 +42,25 @@ export function VoiceVisualization({
   React.useEffect(() => {
     if (isRecording) {
       // Scale audio level non-linearly for better visual response
-      // Values < 0.1 will be boosted more significantly
+      // Values < 0.1 will be boosted more significantly, but with reduced scaling overall
       const scaledAudioLevel = audioLevel < 0.1 
-        ? audioLevel * 4 
-        : 0.4 + (audioLevel * 0.6);
+        ? audioLevel * 3 // Reduced from 4 to 3
+        : 0.3 + (audioLevel * 0.5); // Reduced from 0.4 + 0.6 to 0.3 + 0.5
       
       // Target amplitude based on scaled audio level (0-1)
-      // Scale it up for visual impact (0-50)
-      const targetAmplitude = Math.min(scaledAudioLevel * 50, 50);
+      // Scale it up for visual impact (0-40) - reduced from 50 to 40
+      const targetAmplitude = Math.min(scaledAudioLevel * 40, 40);
       
       const animateWaves = () => {
-        // Update time offset for wave movement even when audio is low
-        setTimeOffset(prev => prev + 0.05);
+        // Reduce time offset increment for slower wave movement
+        // Changed from 0.05 to 0.02
+        setTimeOffset(prev => prev + 0.02);
         
         // Create dynamic phase update speeds based on frequency content
-        const lowImpact = Math.pow(frequencyData.low, 0.5) * 0.01 + 0.01;  // 0.01-0.02
-        const midImpact = Math.pow(frequencyData.mid, 0.5) * 0.02 + 0.015; // 0.015-0.035
-        const highImpact = Math.pow(frequencyData.high, 0.5) * 0.04 + 0.02; // 0.02-0.06
+        // Reduced all values by ~50% for slower movement
+        const lowImpact = Math.pow(frequencyData.low, 0.5) * 0.005 + 0.005;  // 0.005-0.01 (was 0.01-0.02)
+        const midImpact = Math.pow(frequencyData.mid, 0.5) * 0.01 + 0.007; // 0.007-0.017 (was 0.015-0.035)
+        const highImpact = Math.pow(frequencyData.high, 0.5) * 0.02 + 0.01; // 0.01-0.03 (was 0.02-0.06)
         
         // Update wave phases dynamically based on frequency content
         setWavePhases(prev => ({
@@ -71,40 +72,50 @@ export function VoiceVisualization({
           wave6: prev.wave6 + lowImpact + midImpact * 0.2 + highImpact * 0.1, // Balanced
         }));
         
-        // Smoothly animate towards the target amplitude
+        // Smoothly animate towards the target amplitude with slower rates
+        // Reduced rate values for smoother transitions
         setWaveAmplitude(prev => {
           if (Math.abs(prev - targetAmplitude) < 0.5) return targetAmplitude;
-          // Faster increase when amplitude grows, slower decrease for smoother effect
-          const rate = prev < targetAmplitude ? 0.3 : 0.1;
+          // Slower rates for both increase and decrease
+          const rate = prev < targetAmplitude ? 0.15 : 0.05; // Reduced from 0.3/0.1 to 0.15/0.05
           return prev + (targetAmplitude - prev) * rate;
         });
         
-        animationRef.current = requestAnimationFrame(animateWaves);
+        // Slow down animation frame rate (approximately 33ms between frames instead of ~16ms)
+        animationRef.current = setTimeout(() => {
+          requestAnimationFrame(animateWaves);
+        }, 33) as unknown as number;
       };
       
       animateWaves();
     } else {
       // When not recording, smoothly return to zero with a nice fade out effect
       const fadeOut = () => {
-        setTimeOffset(prev => prev + 0.02); // Keep time moving for smooth transition
+        // Slower time movement for fade out
+        setTimeOffset(prev => prev + 0.01); // Reduced from 0.02 to 0.01
         
+        // Slower phase changes during fade out
         setWavePhases(prev => ({
-          wave1: prev.wave1 + 0.01,
-          wave2: prev.wave2 + 0.015,
-          wave3: prev.wave3 + 0.0175,
-          wave4: prev.wave4 + 0.0125,
-          wave5: prev.wave5 + 0.02,
-          wave6: prev.wave6 + 0.011,
+          wave1: prev.wave1 + 0.005, // Reduced from 0.01
+          wave2: prev.wave2 + 0.007, // Reduced from 0.015
+          wave3: prev.wave3 + 0.009, // Reduced from 0.0175
+          wave4: prev.wave4 + 0.006, // Reduced from 0.0125
+          wave5: prev.wave5 + 0.01,  // Reduced from 0.02
+          wave6: prev.wave6 + 0.005, // Reduced from 0.011
         }));
         
+        // Slower fade out rate for more gradual transition
         setWaveAmplitude(prev => {
-          const newValue = prev * 0.95; // Slightly slower fade-out for elegance
+          const newValue = prev * 0.97; // Slower fade-out (was 0.95)
           if (newValue < 0.1) return 0;
           return newValue;
         });
         
         if (waveAmplitude > 0.1) {
-          animationRef.current = requestAnimationFrame(fadeOut);
+          // Use setTimeout to slow down the animation frame rate
+          animationRef.current = setTimeout(() => {
+            requestAnimationFrame(fadeOut);
+          }, 33) as unknown as number;
         }
       };
       
@@ -113,20 +124,22 @@ export function VoiceVisualization({
     
     return () => {
       if (animationRef.current) {
+        // Clean up correctly whether we're using setTimeout or requestAnimationFrame
+        clearTimeout(animationRef.current as unknown as number);
         cancelAnimationFrame(animationRef.current);
       }
     };
   }, [isRecording, audioLevel, frequencyData]);
 
-  // Calculate frequency-based amplitude modifiers
-  const lowFreqAmplitude = frequencyData.low * 1.2; // Boost low frequencies for visibility
-  const midFreqAmplitude = frequencyData.mid * 1.0; // Normal mid frequencies 
-  const highFreqAmplitude = frequencyData.high * 0.8; // Slightly reduce high frequencies
+  // Calculate frequency-based amplitude modifiers with reduced values
+  const lowFreqAmplitude = frequencyData.low * 1.0; // Reduced from 1.2
+  const midFreqAmplitude = frequencyData.mid * 0.8; // Reduced from 1.0
+  const highFreqAmplitude = frequencyData.high * 0.6; // Reduced from 0.8
 
-  // Calculate dynamic frequency multipliers based on audio content
-  const lowFreqMult = 0.8 + frequencyData.low * 0.4; // 0.8-1.2x
-  const midFreqMult = 0.9 + frequencyData.mid * 0.6; // 0.9-1.5x
-  const highFreqMult = 1.0 + frequencyData.high * 1.0; // 1.0-2.0x
+  // Calculate dynamic frequency multipliers with reduced ranges
+  const lowFreqMult = 0.85 + frequencyData.low * 0.3; // 0.85-1.15x (was 0.8-1.2x)
+  const midFreqMult = 0.9 + frequencyData.mid * 0.4;  // 0.9-1.3x (was 0.9-1.5x)
+  const highFreqMult = 1.0 + frequencyData.high * 0.7; // 1.0-1.7x (was 1.0-2.0x)
 
   return (
     <div className="relative w-full flex justify-center items-center mt-4">
@@ -283,8 +296,8 @@ export function VoiceVisualization({
             <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
             <feGaussianBlur stdDeviation="20" />
             <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
-            <feColorMatrix type="matrix" values="0 0 0 0 0.185021 0 0 0 0 0.156042 0 0 0 0 0.735625 0 0 0 1 0" />
-            <feBlend mode="normal" in2="shape" result="effect1_innerShadow_316_1437" />
+            <feColorMatrix type="matrix" values="0 0 0 0 0.185021 0 0 0 0 0.156042 0 0 0 0 0.735625 0 0 0 1 0" result="effect1_innerShadow_316_1437" />
+            <feBlend mode="normal" in2="shape" result="effect2_innerShadow_316_1437" />
             <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
             <feGaussianBlur stdDeviation="15" />
             <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1" />
@@ -297,7 +310,6 @@ export function VoiceVisualization({
             <feBlend mode="normal" in2="effect2_innerShadow_316_1437" result="effect3_innerShadow_316_1437" />
           </filter>
           
-          {/* More filter definitions */}
           <filter id="filter3_di_316_1437" x="13" y="94.9975" width="212.839" height="49.9287" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
@@ -314,7 +326,6 @@ export function VoiceVisualization({
             <feBlend mode="normal" in2="shape" result="effect2_innerShadow_316_1437" />
           </filter>
           
-          {/* More filters */}
           <filter id="filter4_dif_316_1437" x="34.9053" y="73.912" width="190.095" height="86.6914" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
@@ -348,7 +359,6 @@ export function VoiceVisualization({
             <feBlend mode="normal" in2="shape" result="effect2_innerShadow_316_1437" />
           </filter>
           
-          {/* Remaining filters */}
           <filter id="filter6_di_316_1437" x="27.0521" y="84" width="213.948" height="82.4978" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
@@ -397,7 +407,6 @@ export function VoiceVisualization({
             <feBlend mode="normal" in2="shape" result="effect2_innerShadow_316_1437" />
           </filter>
           
-          {/* Radial gradients */}
           <radialGradient id="paint0_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(120 120) rotate(90) scale(100)">
             <stop stopColor="#312CA3" />
             <stop offset="0.3137" stopColor="#360E69" />
@@ -435,7 +444,6 @@ export function VoiceVisualization({
             <stop offset="1" stopColor="#D9D9D9" stopOpacity="0" />
           </radialGradient>
           
-          {/* Wave gradients */}
           <radialGradient id="paint7_radial_316_1437" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(119.419 123.425) rotate(90) scale(18.0491 102.087)">
             <stop stopColor="#2542DD" stopOpacity="0" />
             <stop offset="1" stopColor="#361D80" />
@@ -500,4 +508,3 @@ export function VoiceVisualization({
     </div>
   );
 }
-
