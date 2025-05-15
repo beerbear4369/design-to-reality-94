@@ -111,7 +111,7 @@ Services
 
 ### Stage 2: Audio Recording & Processing
 
-**Objective:** Implement audio recording functionality with real-time analysis for visualization.
+**Objective:** Implement audio recording functionality that integrates with the existing visualization.
 
 **Tasks:**
 1. **Audio Recording Hook**
@@ -120,31 +120,20 @@ Services
      - MediaRecorder implementation for WAV capture
      - Start/stop recording functionality
      - Error handling for permission issues
+     - Integration with existing useAudioLevel hook for visualization
 
-2. **Audio Analysis**
-   - Add real-time audio analysis to `useAudioRecorder`:
-     - Create AudioContext and analyzer nodes
-     - Extract amplitude data for visualization
-     - Calculate frequency distribution (low/mid/high)
-     - Return audio level metrics in hook
-
-3. **Voice Visualization Enhancement**
-   - Modify existing visualization component:
-     - Connect to real-time audio metrics
-     - Add different colors for AI response state
-     - Ensure responsive animation to audio input
-
-4. **Recording Button Enhancement**
+2. **Recording Button Enhancement**
    - Update recording button component:
      - Connect to useAudioRecorder hook
-     - Add visual feedback for recording states
-     - Implement smooth transitions between states
+     - Implement proper recording state management
+     - Handle errors and permission status
+     - Add accessibility features
 
 **Deliverables:**
 - Functional audio recording with WAV output
-- Real-time audio visualization based on microphone input
-- Visual indicators for recording state
-- Proper error handling for permissions
+- Integration with existing visualization system
+- Complete microphone permission handling
+- Proper error handling for device access issues
 
 ### Stage 3: Conversation UI Flow
 

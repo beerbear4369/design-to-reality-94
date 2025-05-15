@@ -36,20 +36,20 @@ export function KukuCoach() {
         
         {/* Fixed height container for message with improved spacing */}
         <div className="min-h-[100px] flex items-center justify-center w-full px-6 mt-[20px]">
-          <AIMessage 
-            message={
-              error ? 
-                error : 
-                isRecording ? 
-                  "I'm listening..." : 
+        <AIMessage 
+          message={
+            error ? 
+              error : 
+              isRecording ? 
+                "I'm listening..." : 
                   "I'm here to help you with your goals.\nWhat would you like to discuss today?"
-            } 
-          />
+          } 
+        />
         </div>
         
         {/* Recording button with better positioning */}
         <div className="mb-[50px] mt-[20px]">
-          <RecordingButton isRecording={isRecording} onClick={toggleRecording} />
+        <RecordingButton isRecording={isRecording} onClick={toggleRecording} />
         </div>
       </section>
     </main>
