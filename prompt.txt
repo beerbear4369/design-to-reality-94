@@ -1,0 +1,56 @@
+Additional Clarifying Questions
+UI Feedback During Recording:
+Should we implement any visual timer or duration indicator during recording?-no
+Would you like any additional UI indicators beyond the voice visualization (like a recording indicator light)?-no keep it simple now
+Mock Response Behavior:
+How variable should the mock AI responses be? (Fixed responses, random from a set, context-aware based on simple rules)
+Should we simulate different response times to make it feel more realistic?--just create a response with some content to makesure app working
+Voice Activity Detection:
+Would you like to implement automatic recording stop after a certain period of silence?--not now
+Should recording automatically start when voice is detected, or only on button press?--only leave it to button at the momend
+Error Handling:
+How should we handle potential recording permission issues (microphone access denied)?-prompt user to fix maybe
+Should we handle device switching (e.g., if user connects/disconnects headphones during session)?--not now, keep this in mind for future refinement consideration
+
+Session State Management:
+Do you want the ability to pause/resume a session, or should sessions be continuous until ended?--in the future iteration, have this function. now not the focus.
+Should session data persist if the user refreshes the page?--yes, at the backend, conversation history is maintened for a session, need to consider how to integrate so it works better
+
+Proposed Ideas for Conversation Flow Handling
+For handling pauses and interruptions in conversation flow, I propose several options:
+
+Silence Detection:
+Automatically stop recording after 2-3 seconds of silence--no
+Display a "Still listening..." message if silence extends but recording continues--in future iteration
+Provide visual feedback of silence detection (pulsing indicator)--no
+
+Interruption Handling: not now
+Allow user to interrupt AI response by pressing record button while AI is "speaking"
+Visually indicate when interruption is possible
+Fade out current AI response when interrupted
+
+Conversation Pacing:
+Implement a "thinking" state between user input and AI response--this is good, show "kuku is thinking" in the Response
+Show typing indicators during AI response generation-no
+Vary response timing based on message length for natural feel--no, set timeout for 1 human response to be 5 minutes max
+
+Contextual Prompts:no
+After long pauses, show subtle prompt suggestions ("Would you like to talk about...")
+Provide gentle re-engagement prompts if session goes silent for too long
+Include visual indicators for "your turn to speak" moments
+
+Revised Implementation Plan
+AudioRecorder Hook & Voice Visualization Integration:
+Create a custom hook that captures real-time audio data
+Perform audio analysis for amplitude/frequency data
+Connect audio metrics to voice visualization component
+Implement WAV format handling
+Display voice visualization waveform in different color when AI respond
+
+Mock Backend Service: (pls consider the backend integration doc and creat the mockup integration correctly)
+Create a simulated API service with response delays
+Build a collection of contextual mock responses
+Implement session management with local storage
+
+
+Conversation Flow Management:(pls consider the backend integration doc and repropose)

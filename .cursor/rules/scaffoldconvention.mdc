@@ -1,0 +1,115 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+description: "React Component Scaffold: Use when creating new React (v18 + TypeScript) components or pages to ensure proper structure with Tailwind CSS, Shadcn/UI components, TanStack Query hooks, and project conventions."
+globs:
+
+"src/**/*.tsx"
+alwaysApply: false
+
+Tech Stack Context
+
+React 18 + TypeScript (Vite)
+
+Tailwind CSS
+
+Shadcn/UI (Radix UI)
+
+TanStack Query v5
+
+React Context API
+
+React Router v6
+
+Functional Component Structure
+
+Functional Components Only: Use function or arrow function components – avoid class components.
+
+Props Interface: Define a TypeScript interface or type for component props.
+
+Hook Usage: useState, useEffect, useMemo, useCallback as needed.
+
+Return JSX: Wrap output in semantic container with Tailwind classes.
+
+Export Component: Default export; file name matches component name.
+
+Styling with Tailwind CSS
+
+Use className with utility classes.
+
+Responsive (sm:, md:) and pseudo-class variants (hover:, focus:).
+
+Prefer utility-first; avoid separate CSS files.
+
+Follow tailwind.config.js design tokens.
+
+Use dark: variant for dark mode support.
+
+Using Shadcn/UI Components
+
+Prefill Components: Use <Button>, <Input>, <Dialog>, etc.
+
+Imports: import { Button } from "@/components/ui/button".
+
+Props & Variants: Utilize size/variant props and className for overrides.
+
+Accessibility: Preserve ARIA and keyboard support.
+
+Data Fetching with TanStack Query v5
+
+useQuery:
+
+const { data, isLoading, error } = useQuery({
+  queryKey: ['items'],
+  queryFn: fetchItems
+});
+
+Handle loading (isLoading), error (error), and success states.
+
+useMutation:
+
+const mutation = useMutation({ mutationFn: addItem });
+mutation.mutate(newItem);
+
+Configure staleTime, cacheTime, enabled, and use queryClient.invalidateQueries.
+
+Extract shared logic into custom hooks in src/hooks/.
+
+State Management with Context API
+
+Use Context for global state (e.g., AuthContext).
+
+Create providers in src/lib or src/contexts.
+
+Consume via useContext() or custom hook (e.g., useAuth()).
+
+Define context value types for safety.
+
+Routing with React Router v6
+
+Pages in src/pages/ correspond to routes.
+
+Define routes in <Routes> / <Route>.
+
+Use useNavigate(), useParams(), useLocation().
+
+Use <Link> for navigation.
+
+Implement layout routes & route guards as needed.
+
+File Structure & Naming Conventions
+
+Components: src/components/ and src/components/kuku-coach/.
+
+Pages: src/pages/ (PascalCase filenames).
+
+Hooks: src/hooks/ prefixed with use.
+
+Lib/Utils: src/lib/ for shared logic and constants.
+
+PascalCase for components/files; UPPER_SNAKE_CASE for constants.
+
+
+Use .tsx for JSX; .ts for logic-only modules.
