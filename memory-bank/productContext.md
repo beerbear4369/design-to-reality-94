@@ -8,45 +8,67 @@ Kuku Coach aims to provide an accessible and engaging platform for AI-powered co
 *   Provides on-demand coaching and conversational AI interaction.
 *   Offers a user-friendly interface for users who prefer voice over text.
 *   Makes AI coaching more accessible by being browser-based.
+*   Creates a more engaging and visually appealing experience with dynamic voice visualization.
+*   Simplifies the coaching process with a straightforward three-screen flow.
 
 ## 3. How It Should Work (User Flow)
 
 1.  **Start Screen:** The user is greeted with an initial screen (`StartSessionPage`).
     *   Displays: "Kuku Coach", "Your AI Coaching Assistant", and a "Start Session" button.
+    *   Visually appealing background with subtle Tailwind gradients.
+    *   Optional: Brief description of what to expect from a coaching session.
+
 2.  **Session Start:** Upon clicking "Start Session":
-    *   The frontend initiates a new session with the backend.
-    *   The user is navigated to the `ActiveSessionPage`.
-3.  **Active Session Screen (`ActiveSessionPage`):
+    *   The frontend initiates a new session with the mock backend.
+    *   The user is navigated to the `ActiveSessionPage` with the session ID in the URL.
+    *   WebSocket connection established for real-time communication.
+
+3.  **Active Session Screen (`ActiveSessionPage`)**:
     *   Displays: "Kuku Coach" title, "Speak to your coach" subtitle.
-    *   A central area shows a voice waveform visualization.
-    *   An initial message from the AI is displayed (e.g., "I'm here to help you with your goals. What would you like to discuss today?").
-    *   A prominent recording button is available.
+    *   A central circular area shows a voice waveform visualization with multiple animated layers.
+    *   An initial message from the AI is displayed automatically (e.g., "I'm here to help you with your goals. What would you like to discuss today?").
+    *   A prominent recording button is available at the bottom of the screen.
+
 4.  **User Interaction:**
     *   User clicks the record button to start speaking.
-    *   The frontend captures the audio.
-    *   User clicks the button again (or it auto-stops) to finish recording.
-    *   The frontend sends the audio (e.g., MP3) to the backend.
-5.  **AI Response:**
-    *   The backend processes the audio and generates an AI response (both audio and text).
-    *   The backend sends the AI's audio (e.g., URL to an MP3) and text transcription back to the frontend.
-    *   The frontend plays the AI's audio response automatically.
-    *   The frontend displays the AI's text reply (e.g., in a chat bubble or designated area).
-    *   The voice visualization may react to the AI's speech.
-6.  **Conversation Continues:** The user can then record another message, and the cycle repeats.
-7.  **Session End:** When the conversation is complete (either by user indication or AI guidance):
-    *   The backend may send a final message and a session summary.
+    *   The button changes appearance to indicate recording state.
+    *   The voice visualization becomes active, responding to the user's voice.
+    *   The frontend captures and analyzes the audio in real-time.
+    *   User clicks the button again (or it auto-stops after silence) to finish recording.
+    *   The frontend sends the audio to the backend via WebSocket.
+
+5.  **AI Response Processing:**
+    *   The visualization transitions to a "thinking" state.
+    *   "Kuku is thinking..." indicator appears.
+    *   The backend processes the audio (simulated in our mock implementation).
+    *   After a brief delay, the AI response is generated.
+
+6.  **AI Response Playback:**
+    *   The backend sends the AI's text response and audio URL.
+    *   The frontend displays the text with a typing animation.
+    *   The audio response plays automatically.
+    *   The voice visualization responds to the AI's voice.
+    *   Upon completion, the recording button becomes available again.
+
+7.  **Conversation Continues:** The user can then record another message, and the cycle repeats.
+
+8.  **Session End:** When the conversation is complete (either by user indication or AI guidance):
+    *   The backend generates a session summary.
     *   The frontend navigates to the `SessionSummaryPage`.
-8.  **Session Summary Screen (`SessionSummaryPage`):
+
+9.  **Session Summary Screen (`SessionSummaryPage`)**:
     *   Displays: "Session Summary" title.
     *   Shows the summary text of the coaching session.
-    *   Asks "How was your coaching experience?" with a star rating system.
+    *   Asks "How was your coaching experience?" with a 5-star rating system.
     *   Provides a "Start New Session" button (navigates to `StartSessionPage`).
-    *   Provides a "View Session History" button (functionality for a later phase).
+    *   Provides a "View Session History" button (placeholder for future functionality).
 
 ## 4. User Experience Goals
 
 *   **Intuitive:** Easy to understand and use, especially the voice recording and interaction flow.
-*   **Responsive:** Quick feedback during recording, API calls, and AI responses.
-*   **Engaging:** The voice visualization and clear presentation of AI responses should keep users engaged.
-*   **Seamless:** Smooth transitions between different states and screens of the application.
-*   **Accessible:** Strive for good accessibility practices. 
+*   **Responsive:** Quick feedback during recording, API calls, and AI responses with appropriate loading states.
+*   **Visually Engaging:** The multi-layered voice visualization and clear presentation of AI responses maintain user interest.
+*   **Seamless:** Smooth transitions between different states (idle, recording, thinking, responding) and screens.
+*   **Accessible:** Good accessibility practices for screen readers and keyboard navigation.
+*   **Modern:** Clean, contemporary UI with glass-effect components and subtle animations.
+*   **Consistent:** Unified design language across all screens with proper spacing and typography. 

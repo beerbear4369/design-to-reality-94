@@ -23,33 +23,44 @@
   - ✅ Implemented Session Summary page with rating system
   - ✅ Enhanced voice visualization with multiple waveforms
   - ✅ Fixed visualization cropping issues and improved animation
+- ✅ Started Phase 4: Core Voice Interaction Logic
+  - ✅ Created mock backend service structure:
+    - ✅ API services (conversation.ts, audio.ts)
+    - ✅ WebSocket service for real-time communication
+    - ✅ Storage service for localStorage persistence
+  - ✅ Enhanced voice visualization component:
+    - ✅ Added a fourth asymmetric waveform
+    - ✅ Added background image to visualization
+    - ✅ Improved animation and responsiveness
+    - ✅ Added detailed code documentation
 
 ## In Progress
 
-- 🟡 Planning Phase 4: Core Voice Interaction Logic
-  - 🟡 Designing mock backend service architecture
-  - 🟡 Planning REST and WebSocket implementation
-  - 🟡 Structuring conversation flow and audio processing
+- 🟡 Phase 4: Core Voice Interaction Logic
+  - 🟡 Audio Recording & Processing Implementation
+    - 🟡 Implementing Web Audio API for microphone capture
+    - 🟡 Creating audio level analysis for visualization
+    - 🟡 Connecting the recording button to actual recording logic
+  - 🟡 Conversation UI Flow
+    - 🟡 Adding "thinking" state indicators
+    - 🟡 Implementing typed response animation
+    - 🟡 Creating visualization states for AI responses
 
 ## Up Next
 
-- Phase 4: Core Voice Interaction Logic Implementation
-  - 4.1: Mock Backend Service Creation
-    - Implement REST API endpoints (conversations, audio)
-    - Create WebSocket server for real-time communication
-    - Set up localStorage persistence for conversation history
-  - 4.2: Audio Recording & Processing
-    - Develop microphone access and recording functionality
-    - Create audio analysis for visualization
-    - Implement WAV format conversion
-  - 4.3: Conversation UI Flow
-    - Add "thinking" state indicators
-    - Implement typed response animation
-    - Create different visualization states for AI responses
-  - 4.4: Front-end Integration
-    - Connect UI components to mock services
-    - Implement complete conversation flow
-    - Add persistence for page refreshes
+- Complete Phase 4: Core Voice Interaction Logic
+  - 4.1: Audio Recording & Processing
+    - Finalize microphone access and recording functionality
+    - Complete audio level analysis for real-time visualization
+    - Implement WAV format conversion for API transmission
+  - 4.2: Front-end Integration with Mock Backend
+    - Connect UI components to the WebSocket service
+    - Implement complete conversation flow with state management
+    - Add persistence for page refreshes and session restoration
+  - 4.3: Session Summarization
+    - Generate and display session summaries
+    - Process and store user ratings
+    - Enable new session creation from summary screen
 - Phase 5: Refinements, Styling, and Testing
   - Final UI adjustments
   - Comprehensive testing
@@ -58,8 +69,10 @@
 ## Known Issues
 
 - Session data isn't persisted between screens yet
+- WebSocket connection isn't fully implemented with the UI components
+- Audio recording functionality is not connected to the microphone
 - View Session History button is non-functional (placeholder only)
-- Audio processing is using mock data rather than real microphone input
+- Audio playback of AI responses isn't implemented yet
 
 ## Future Enhancements (Post MVP)
 
