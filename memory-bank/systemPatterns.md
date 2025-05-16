@@ -9,6 +9,7 @@ The application follows a typical React Single Page Application (SPA) architectu
 - **React Router:** Used for navigation between different views without full page reloads.
 - **Context API:** Used for state management across components.
 - **Service-oriented Backend:** Mock implementation of microservices architecture with REST and WebSocket.
+- **Custom Hooks:** Encapsulation of complex logic in reusable hooks.
 
 ## 2. Key Design Patterns
 
@@ -78,6 +79,28 @@ Services
     └── clearAllConversations() - Removes all conversations
 ```
 
+### Audio Recording Pattern
+The audio recording logic follows a specific pattern:
+1. **Hook-based abstraction:** `useAudioRecorder` encapsulates all recording logic
+2. **State management:**
+   - Track recording state (not recording → recording → processing)
+   - Manage resources (MediaRecorder, MediaStream)
+   - Handle errors and edge cases
+3. **Lifecycle management:**
+   - Setup (get permissions, create recorder)
+   - Recording (capture audio chunks)
+   - Processing (combine chunks into blob)
+   - Cleanup (release resources)
+4. **Error handling:**
+   - Permission errors
+   - Recording failures
+   - Processing issues
+   - Fallback mechanisms
+5. **Integration with UI:**
+   - Provide visual feedback during recording
+   - Show processing state
+   - Display errors when they occur
+
 ### Voice Interaction Pattern
 1. User triggers recording → 
 2. Frontend captures audio with MediaRecorder → 
@@ -100,10 +123,12 @@ Services
 
 ### Audio Recording & Processing
 1. User clicks record button → 
-2. MediaRecorder API captures microphone input → 
-3. WebAudioAPI analyzes audio for visualization → 
-4. WebSocket sends audio data in chunks → 
-5. On recording end, complete audio sent to backend → 
+2. startRecording() called from useAudioRecorder hook →
+3. MediaRecorder API captures microphone input → 
+4. WebAudioAPI analyzes audio for visualization → 
+5. On stop recording:
+   - For testing: Generate and download audio file
+   - For production: Send audio blob to backend via WebSocket → 
 6. Backend triggers "thinking" state (with 2-second delay in mock) → 
 7. AI response generated with both text and audio URL → 
 8. Response played through audio element and displayed with typing effect
@@ -133,6 +158,10 @@ Services
 
 ### Key Hooks
 - **useAudioRecorder:** Manages microphone access, recording, and real-time audio analysis
+  - Provides recording lifecycle control (start, stop, save)
+  - Handles errors and recovery mechanisms
+  - Manages resource cleanup to prevent memory leaks
+- **useAudioLevel:** Processes audio data for visualization
 - **useConversation:** Manages conversation state and history, integrates with storage
 - **useWebSocket:** Handles WebSocket connection and event management
 - **useThinking:** Manages the AI "thinking" state during response generation
@@ -167,9 +196,20 @@ interface Message {
   text: string;
   audioUrl?: string;
 }
+
+// Audio Recording Models
+interface UseAudioRecorderResult {
+  audioBlob: Blob | null;
+  isRecording: boolean;
+  error: string | null;
+  recordingDuration: number;
+  startRecording: () => Promise<void>;
+  stopRecording: () => void;
+  saveRecording: (filename?: string) => void;
+}
 ```
 
 ### UI State Management
 - **Recording State:** Not recording → Recording → Processing → AI Speaking → Not recording
 - **Message Flow:** User Message → AI Thinking → AI Response → User Message (loop)
-- **Session Flow:** Start Screen → Active Session → Summary Screen → Start Screen 
+- **Session Flow:** Start Screen → Active Session → Summary Screen → Start Screen

@@ -111,7 +111,7 @@ Services
 
 ### Stage 2: Audio Recording & Processing
 
-**Objective:** Implement audio recording functionality that integrates with the existing visualization.
+**Objective:** Implement audio recording functionality that works alongside the existing visualization system.
 
 **Tasks:**
 1. **Audio Recording Hook**
@@ -120,20 +120,32 @@ Services
      - MediaRecorder implementation for WAV capture
      - Start/stop recording functionality
      - Error handling for permission issues
-     - Integration with existing useAudioLevel hook for visualization
+     - Focus solely on audio capture (no visualization responsibilities)
 
 2. **Recording Button Enhancement**
    - Update recording button component:
-     - Connect to useAudioRecorder hook
-     - Implement proper recording state management
-     - Handle errors and permission status
-     - Add accessibility features
+     - Trigger both hooks with the same recording state:
+       ```jsx
+       // Share isRecording state between both hooks
+       const { audioLevel, frequencyData } = useAudioLevel({ isRecording });
+       const { audioBlob, isProcessing, error } = useAudioRecorder({ isRecording });
+       ```
+     - Manage recording state transitions
+     - Handle permission errors from either hook
+     - Provide appropriate accessibility attributes
+
+**Approach:**
+- Keep the existing visualization system unchanged
+- Use a dual-hook system with clear separation of concerns:
+  - `useAudioLevel`: Continues to handle audio analysis for visualization (no changes)
+  - `useAudioRecorder`: Focuses only on recording the actual audio for backend transmission
+- Both hooks will share the same `isRecording` state from the parent component
 
 **Deliverables:**
 - Functional audio recording with WAV output
-- Integration with existing visualization system
+- Parallel operation with the existing visualization system
 - Complete microphone permission handling
-- Proper error handling for device access issues
+- Audio blob/data ready for WebSocket transmission to backend
 
 ### Stage 3: Conversation UI Flow
 

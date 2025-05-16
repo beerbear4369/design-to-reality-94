@@ -1,5 +1,77 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Kuku Coach Project Rules
+
+## File Structure
+
+- Components specifically for the Kuku Coach application should be placed in `src/components/kuku-coach/`
+- React hooks should be placed in `src/hooks/` with names starting with `use`
+- Page components should be placed in `src/pages/` with names ending in `Page.tsx`
+- Backend service mocks should be organized in `src/services/` by function type
+- Context providers should be placed in `src/context/` with names ending in `Provider.tsx`
+
+## Component Patterns
+
+### Voice Visualization
+
+The voice visualization component follows these patterns:
+- Uses SVG for rendering multiple waveform layers
+- Employs mask-based circular clipping for visual effect
+- Each waveform responds to different frequency ranges
+- Animation framerates are controlled to optimize performance
+- Accepts `isRecording` and `audioLevel` props for controlling state
+
+### UI Components
+
+- Use glass effect for message containers (backdrop-blur with semi-transparent background)
+- All interactive elements should have hover and focus states
+- Keep consistent 16px base spacing throughout the application
+- Use subtle animations for state transitions (200-300ms duration)
+- Follow the purple/blue color palette established in the design
+
+## Mock Backend Implementation
+
+- Use TypeScript interfaces for all service request/response types
+- Implement appropriate delay simulation for realistic UX (500-2000ms)
+- All backend services should follow the pattern of returning Promises
+- WebSocket events should follow the naming convention: `[source]:[event]`
+- Mock data should be comprehensive enough to test all UI states
+
+## Navigation Flow
+
+The application follows a specific navigation flow:
+1. StartSessionPage (/) → 
+2. ActiveSessionPage (/session/:sessionId) → 
+3. SessionSummaryPage (/summary/:sessionId)
+
+Preserve this flow for consistency and avoid creating additional routes.
+
+## State Management
+
+- Use Context API for shared state across components
+- Local component state for UI-specific behavior
+- WebSocket for real-time communication
+- localStorage for persistence
+- All API calls should handle loading, error, and success states
+
+## Voice Interaction
+
+The voice interaction follows this pattern:
+1. User clicks record button → 
+2. Capture audio → 
+3. Send via WebSocket → 
+4. Show "thinking" state → 
+5. Process response → 
+6. Display with typing animation →
+7. Play audio response
+
+## Testing Strategy
+
+- Component tests should focus on UI render states
+- Mock WebSocket and audio APIs for tests
+- Test all user flow paths
+- Verify proper state transitions for voice recording
+
