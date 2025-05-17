@@ -1,112 +1,151 @@
 /**
  * Audio generator utility
- * Creates simple WAV files for testing audio playback
+ * Creates audio responses using Web Audio API
  */
 
 // Store created URLs for cleanup
 const createdUrls: string[] = [];
 
-// Generate a simple beep tone as a WAV file
-export function generateBeepWav(duration = 1, frequency = 440, volume = 0.5): string {
-  // Audio parameters
-  const sampleRate = 44100;
-  const numSamples = Math.floor(sampleRate * duration);
-  const amplitude = 32767 * volume; // 16-bit audio max amplitude * volume
-  
-  // Create the WAV header
-  const header = createWavHeader(numSamples, sampleRate);
-  
-  // Create the audio data (sine wave)
-  const data = new Int16Array(numSamples);
-  
-  for (let i = 0; i < numSamples; i++) {
-    // Simple sine wave at the specified frequency
-    data[i] = Math.round(amplitude * Math.sin(2 * Math.PI * frequency * i / sampleRate));
-  }
-  
-  // Combine header and data into a Blob
-  const blob = new Blob([header, data], { type: 'audio/wav' });
-  
-  // Create a URL for the blob
-  const url = URL.createObjectURL(blob);
-  createdUrls.push(url);
-  return url;
-}
-
-// Generate a sequence of tones as a WAV file
-export function generateSequence(tones: Array<{freq: number, duration: number}>, volume = 0.5): string {
-  // Audio parameters
-  const sampleRate = 44100;
-  const totalSamples = Math.floor(sampleRate * tones.reduce((sum, tone) => sum + tone.duration, 0));
-  const amplitude = 32767 * volume; // 16-bit audio max amplitude * volume
-  
-  // Create the WAV header
-  const header = createWavHeader(totalSamples, sampleRate);
-  
-  // Create the audio data for each tone
-  const data = new Int16Array(totalSamples);
-  let sampleIndex = 0;
-  
-  for (const tone of tones) {
-    const toneSamples = Math.floor(sampleRate * tone.duration);
-    
-    for (let i = 0; i < toneSamples; i++) {
-      if (sampleIndex < totalSamples) {
-        // Simple sine wave at the specified frequency
-        data[sampleIndex] = Math.round(amplitude * Math.sin(2 * Math.PI * tone.freq * i / sampleRate));
-        sampleIndex++;
+/**
+ * Generates speech-like audio using oscillators
+ * @param text The text that would be spoken (used to determine audio length)
+ * @param options Configuration options for the audio
+ * @returns Promise that resolves to a blob URL with the audio
+ */
+export async function generateSpeech(
+  text: string, 
+  options: {
+    voice?: string;
+    rate?: number;
+    pitch?: number;
+    volume?: number;
+  } = {}
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      // Estimated duration based on text length and rate
+      const rate = options.pitch || 1;
+      const estimatedDuration = Math.min(Math.max(text.length * 50 / rate, 2000), 15000);
+      const audioContext = new AudioContext();
+      
+      // Create a buffer for our audio
+      const sampleRate = audioContext.sampleRate;
+      const frameCount = (estimatedDuration / 1000) * sampleRate;
+      const audioBuffer = audioContext.createBuffer(2, frameCount, sampleRate);
+      
+      // Generate speech-like audio with varying frequencies
+      const basePitch = (options.pitch || 1) * 140; // Base frequency in Hz
+      
+      // Fill buffer with synthesized speech-like audio
+      for (let channel = 0; channel < 2; channel++) {
+        const channelData = audioBuffer.getChannelData(channel);
+        let phase = 0;
+        
+        // Create natural rhythm pattern based on words and syllables
+        const wordLength = Math.floor(sampleRate * 0.25); // ~250ms per word
+        const syllableLength = Math.floor(sampleRate * 0.1); // ~100ms per syllable
+        
+        // Process text to create a rhythmic pattern resembling speech
+        const words = text.split(/\s+/).filter(w => w.length > 0);
+        
+        // Create variations based on the text
+        for (let i = 0; i < frameCount; i++) {
+          // Calculate which word and position within the word we're at
+          const wordIndex = Math.floor(i / wordLength) % Math.max(words.length, 1);
+          const posInWord = i % wordLength;
+          const isSyllableStart = posInWord % syllableLength === 0;
+          
+          // Vary the frequency slightly based on the word to create intonation
+          const wordInfluence = words[wordIndex] ? words[wordIndex].length / 10 : 0.5;
+          let frequency = basePitch * (0.8 + wordInfluence * 0.4);
+          
+          // Create natural amplitude envelope - louder at beginning of syllables
+          let amplitude = 0.2 + (isSyllableStart ? 0.3 : 0) * Math.exp(-posInWord / (sampleRate * 0.05));
+          
+          // Small random variations for more natural sound
+          frequency += Math.sin(i * 0.0001) * 10;
+          amplitude += Math.sin(i * 0.001) * 0.05;
+          
+          // Add breathing pauses between words
+          if (posInWord > wordLength * 0.8) {
+            amplitude *= 0.5 * (1 - (posInWord - wordLength * 0.8) / (wordLength * 0.2));
+          }
+          
+          // Generate the waveform
+          const tone = Math.sin(phase) * amplitude;
+          const noise = (Math.random() * 2 - 1) * 0.05; // Add a little noise for consonants
+          
+          // Combine tones and apply master volume
+          channelData[i] = (tone + noise) * (options.volume || 0.7);
+          
+          // Update phase
+          phase += 2 * Math.PI * frequency / sampleRate;
+          if (phase > 2 * Math.PI) {
+            phase -= 2 * Math.PI;
+          }
+        }
       }
+      
+      // Create an offline context to render this buffer to a MediaStream
+      const offlineContext = new OfflineAudioContext(2, frameCount, sampleRate);
+      const source = offlineContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(offlineContext.destination);
+      source.start();
+      
+      // Render the audio
+      offlineContext.startRendering().then(renderedBuffer => {
+        // Convert the rendered buffer to a media stream for recording
+        const audioElement = new Audio();
+        const mediaStreamDest = audioContext.createMediaStreamDestination();
+        const sourceNode = audioContext.createBufferSource();
+        sourceNode.buffer = renderedBuffer;
+        sourceNode.connect(mediaStreamDest);
+        
+        // Create a recorder to capture the stream
+        const mediaRecorder = new MediaRecorder(mediaStreamDest.stream, {
+          mimeType: 'audio/webm; codecs=opus'
+        });
+        const chunks: Blob[] = [];
+        
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            chunks.push(e.data);
+          }
+        };
+        
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'audio/webm; codecs=opus' });
+          console.log(`Generated speech audio blob: size=${blob.size}, type=${blob.type}`);
+          const url = URL.createObjectURL(blob);
+          console.log(`Generated speech audio URL: ${url}`);
+          createdUrls.push(url);
+          resolve(url);
+          
+          // Clean up
+          sourceNode.stop();
+          audioContext.close();
+        };
+        
+        // Start recording and play the source
+        mediaRecorder.start();
+        sourceNode.start();
+        
+        // Stop recording after the buffer duration
+        setTimeout(() => {
+          if (mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+          }
+        }, estimatedDuration + 100);
+      }).catch(err => {
+        console.error("Error rendering audio:", err);
+        reject(err);
+      });
+    } catch (err) {
+      console.error("Error generating speech:", err);
+      reject(err);
     }
-  }
-  
-  // Combine header and data into a Blob
-  const blob = new Blob([header, data], { type: 'audio/wav' });
-  
-  // Create a URL for the blob
-  const url = URL.createObjectURL(blob);
-  createdUrls.push(url);
-  return url;
-}
-
-// Create the WAV header with the correct format
-function createWavHeader(numSamples: number, sampleRate: number): ArrayBuffer {
-  const numChannels = 1; // Mono
-  const bitsPerSample = 16;
-  const byteRate = sampleRate * numChannels * bitsPerSample / 8;
-  const blockAlign = numChannels * bitsPerSample / 8;
-  const dataSize = numSamples * blockAlign;
-  const headerSize = 44; // WAV header size
-  
-  const header = new ArrayBuffer(headerSize);
-  const view = new DataView(header);
-  
-  // "RIFF" chunk descriptor
-  setString(view, 0, 'RIFF');
-  view.setUint32(4, 36 + dataSize, true); // Chunk size
-  setString(view, 8, 'WAVE');
-  
-  // "fmt " sub-chunk
-  setString(view, 12, 'fmt ');
-  view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-  view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
-  view.setUint16(22, numChannels, true); // NumChannels
-  view.setUint32(24, sampleRate, true); // SampleRate
-  view.setUint32(28, byteRate, true); // ByteRate
-  view.setUint16(32, blockAlign, true); // BlockAlign
-  view.setUint16(34, bitsPerSample, true); // BitsPerSample
-  
-  // "data" sub-chunk
-  setString(view, 36, 'data');
-  view.setUint32(40, dataSize, true); // Subchunk2Size
-  
-  return header;
-}
-
-// Helper to set a string in a DataView
-function setString(view: DataView, offset: number, string: string) {
-  for (let i = 0; i < string.length; i++) {
-    view.setUint8(offset + i, string.charCodeAt(i));
-  }
+  });
 }
 
 // Clean up all created URLs to prevent memory leaks

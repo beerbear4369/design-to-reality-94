@@ -1,76 +1,35 @@
-# Active Context: Kuku Coach
+# Active Context
 
 ## Current Focus
+We are developing Kuku Coach, an AI-powered voice coaching application that helps users work through mental health challenges with an accessible interface. The application features a conversation-style interface where users speak to the AI coach and receive spoken responses, with appropriate visual feedback.
 
-We are currently focused on implementing the core conversation flow for the Kuku Coach application. The immediate focus is on:
+## Recent Accomplishments
+- Completed the voice-to-voice conversation loop: user speaks → AI processes → AI responds with audio
+- Implemented a unified audio visualization system that works for both:
+  - Microphone input during user recording
+  - Audio playback during AI response
+- Resolved audio processing issues with proper cleanup of Web Audio API resources
+- Set up mock backend responses with real MP3 files for testing
+- Implemented fallbacks for when audio files can't be loaded
 
-1. State management for the conversation
-2. Connecting UI components to session management
-3. Integrating audio recording with the conversation flow
-4. Creating visual feedback for all conversation states
-5. Preparing for backend integration
+## Current Technical Context
+- Using React (v18) with TypeScript and Vite
+- Web Audio API for capturing and analyzing audio
+- WebAudio AnalyserNode for generating frequency data for visualizations
+- Audio recording uses MediaRecorder API
+- Audio playback uses HTMLAudioElement with Web Audio API analysis
+- We've created hooks for audio recording and audio level analysis
+- Session state is managed through React Context with localStorage persistence
 
-## Recent Changes
-
-- Implemented robust audio recording functionality (Phase 4.2):
-  - Created `useAudioRecorder` hook with complete recording lifecycle
-  - Added error handling for all recording phases
-  - Implemented proper resource cleanup to prevent memory leaks
-  - Added retry mechanisms to handle edge cases
-  - Enhanced recording quality with audio constraints and higher bitrate
-  - Fixed issues with audio trimming at the beginning of recording
-  - Added processing state indicators for better UX
-  - Implemented local download functionality for testing purposes
-
-- Implemented conversation UI flow (Phase 4.3):
-  - Created `SessionContext` for global state management
-  - Implemented persistence of sessions with localStorage
-  - Added `ThinkingIndicator` component for processing state
-  - Enhanced `AIMessage` component with typing animation
-  - Updated page components to integrate with SessionContext
-  - Implemented proper message history management
-  - Added state transitions between recording, thinking, and responding states
-  - Connected audio recording to conversation flow
-
-## Current Decisions
-
-- Using React Context API for state management instead of Redux
-- Sessions are currently preserved in localStorage
-- Audio recording is downloaded locally for development but will be sent to the backend in production
-- Message history is stored as part of the session
-- Using typed animation for AI responses to improve user experience
-- Different visual states are shown for recording, thinking, and responding
-- AI responses are simulated for now but will be connected to the backend API
-- Using session IDs in the URL for sharing and deep linking
+## Current Challenges
+1. Audio visualization needs to work consistently across devices
+2. The same visualization code needs to be reused for both microphone input and AI response playback
+3. The Web Audio API requires careful resource management to avoid memory leaks
+4. Proper fallback mechanisms are needed for different browser capabilities
 
 ## Next Steps
-
-The immediate implementation plan includes:
-
-1. Replace download functionality with backend API integration:
-   - Send recorded audio blob to backend via WebSocket or REST
-   - Add error handling for network failures
-   - Process backend responses for display and playback
-   - Implement proper loading states for network operations
-
-2. Final UI refinements:
-   - Polish animations and transitions
-   - Add loading states for network operations
-   - Improve error handling and recovery
-   - Add instructions and help tooltips
-
-3. Testing and performance optimization:
-   - Test across different browsers
-   - Optimize for mobile devices
-   - Add error boundaries and fallbacks
-   - Measure and improve performance metrics
-
-## Future Considerations (Post-MVP)
-
-- Authentication and user profile implementation
-- Network error handling and recovery
-- Voice activity detection
-- Session pause/resume functionality
-- Interruption handling during AI responses
-- Adaptive conversation prompts for engagement
-- Transition to real backend services
+1. Connect to a real backend API for transcription and response generation
+2. Improve visualization with more nuanced frequency analysis
+3. Add voice emotion detection to enhance coaching responses
+4. Implement proper audio caching and loading states
+5. Build out the coaching methodology with specific interventions

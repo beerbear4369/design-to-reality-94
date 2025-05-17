@@ -1,215 +1,136 @@
-# System Patterns: Kuku Coach
+# System Patterns and Architecture
 
-## 1. Application Architecture
+## Core Architectural Patterns
 
-The application follows a typical React Single Page Application (SPA) architecture with the following key patterns:
+### Component Architecture
+- **Atomic Design Pattern**: Breaking down UI into atoms, molecules, organisms, templates, and pages
+- **Component-Based Architecture**: Each UI element is a reusable React component
+- **Container/Presentational Pattern**: Separating logic from presentation concerns
 
-- **Component-based Structure:** UI elements are broken down into reusable components.
-- **Page-level Components:** Major views of the application are organized as page components.
-- **React Router:** Used for navigation between different views without full page reloads.
-- **Context API:** Used for state management across components.
-- **Service-oriented Backend:** Mock implementation of microservices architecture with REST and WebSocket.
-- **Custom Hooks:** Encapsulation of complex logic in reusable hooks.
+### Data Flow
+- **Context API for Global State**: SessionContext maintains global conversation state
+- **Unidirectional Data Flow**: State flows down, events bubble up
+- **Custom Hooks for Reusable Logic**: Encapsulating complex logic like audio handling in custom hooks
 
-## 2. Key Design Patterns
+### Audio Processing Pipeline
+```mermaid
+flowchart TD
+    subgraph User Input
+        MIC[Microphone Input] --> MST[MediaStream]
+        MST --> MR[MediaRecorder]
+        MR --> BLOB[Audio Blob]
+    end
 
-### Routing Pattern
-- The application uses three main routes:
-  - `/` - Start Screen (Landing Page)
-  - `/session/:sessionId` - Active Session Screen
-  - `/summary/:sessionId` - Session Summary Screen
+    subgraph Analysis
+        MST --> MSRC[MediaStreamSource]
+        MSRC --> ANLZ[AnalyserNode]
+        ANLZ --> FREQ[Frequency Data]
+        FREQ --> VIZ[Visualization]
+    end
 
-### State Management Pattern
-- Global application state is managed using React Context API.
-- Key state elements:
-  - Current session ID
-  - Conversation history (user and AI messages)
-  - Recording status and audio levels
-  - UI state (loading, thinking, responding indicators)
-  - Session summary data
+    subgraph Backend Integration
+        BLOB --> SEND[Send to Backend]
+        SEND --> |Process| RESP[AI Response]
+        RESP --> TXT[Text]
+        RESP --> AUD[Audio URL]
+    end
 
-### Component Hierarchy
-```
-App
-├── TooltipProvider, Toaster (UI utilities)
-└── Routes
-    ├── StartSessionPage (/)
-    ├── ActiveSessionPage (/session/:sessionId)
-    │   ├── KukuCoach
-    │   │   ├── VoiceVisualization
-    │   │   ├── RecordingButton
-    │   │   ├── AIMessage
-    │   │   └── ThinkingIndicator
-    │   └── WebSocket Connection Manager
-    └── SessionSummaryPage (/summary/:sessionId)
-        ├── SummaryText
-        ├── StarRating
-        └── ActionButtons
-```
+    subgraph Playback
+        AUD --> AELEM[Audio Element]
+        AELEM --> PLBK[Audio Playback]
+        AELEM --> ASRC[AudioElementSource]
+        ASRC --> ANLZ2[AnalyserNode]
+        ANLZ2 --> FREQ2[Frequency Data]
+        FREQ2 --> VIZ
+    end
 
-### Backend Service Pattern (Implemented)
-```
-Services
-├── API
-│   ├── Conversation API (conversation.ts)
-│   │   ├── createSession() - Creates a new coaching session
-│   │   ├── getConversation() - Gets conversation by ID
-│   │   ├── getAllConversations() - Lists all conversations
-│   │   ├── updateConversation() - Updates an existing conversation
-│   │   ├── endSession() - Ends session and generates summary
-│   │   └── deleteConversation() - Deletes a conversation
-│   └── Audio API (audio.ts)
-│       ├── transcribeAudio() - Converts audio to text
-│       └── synthesizeSpeech() - Generates AI voice response
-├── WebSocket (websocket/index.ts)
-│   ├── Client Events
-│   │   ├── client:start-recording - User starts recording
-│   │   ├── client:audio-data - Streaming audio data
-│   │   └── client:stop-recording - User stops recording
-│   └── Server Events
-│       ├── server:recording-started - Recording acknowledged
-│       ├── server:thinking - AI processing indicator
-│       ├── server:response - Text response from AI
-│       └── server:audio-response - Audio response URL
-└── Storage (storage/index.ts)
-    ├── saveConversation() - Persists conversation to localStorage
-    ├── getConversation() - Retrieves conversation by ID
-    ├── getAllConversations() - Gets all stored conversations
-    ├── deleteConversation() - Removes a conversation
-    └── clearAllConversations() - Removes all conversations
+    TXT --> MSG[Display Message]
 ```
 
-### Audio Recording Pattern
-The audio recording logic follows a specific pattern:
-1. **Hook-based abstraction:** `useAudioRecorder` encapsulates all recording logic
-2. **State management:**
-   - Track recording state (not recording → recording → processing)
-   - Manage resources (MediaRecorder, MediaStream)
-   - Handle errors and edge cases
-3. **Lifecycle management:**
-   - Setup (get permissions, create recorder)
-   - Recording (capture audio chunks)
-   - Processing (combine chunks into blob)
-   - Cleanup (release resources)
-4. **Error handling:**
-   - Permission errors
-   - Recording failures
-   - Processing issues
-   - Fallback mechanisms
-5. **Integration with UI:**
-   - Provide visual feedback during recording
-   - Show processing state
-   - Display errors when they occur
+## Key Design Patterns
 
-### Voice Interaction Pattern
-1. User triggers recording → 
-2. Frontend captures audio with MediaRecorder → 
-3. Real-time audio analysis updates visualization → 
-4. WebSocket sends audio data chunks → 
-5. On recording end, backend enters "thinking" state → 
-6. AI response generated (mocked with predefined responses) → 
-7. Text response returned and displayed with typing animation → 
-8. Audio response URL provided for playback → 
-9. Conversation continues (loop to step 1)
+### State Management
+- **React Context API**: For global application state
+- **useState**: For component-local state
+- **useRef**: For maintaining references across renders
+- **localStorage**: For persisting session data between page reloads
 
-## 3. Data Flow
+### Audio Processing Pattern
+- **Web Audio API**: For real-time audio processing and analysis
+- **Unified Analyzer Approach**: Same visualization logic for both record and playback
+- **Frequency Band Analysis**: Splitting audio spectrum for more detailed visualization
+- **Resource Lifecycle Management**: Careful tracking and cleanup of audio resources
 
-### Session Initialization
-1. User clicks "Start Session" → 
-2. createSession() API call creates session → 
-3. Session ID stored in state → 
-4. WebSocket connection established → 
-5. Navigate to Active Session page with sessionId in URL
+### Asynchronous Patterns
+- **Promise-based API interactions**: For audio processing and backend communication
+- **React useEffect for Side Effects**: Managing audio lifecycle and playback
+- **Exponential Backoff for Retries**: When handling potentially failing audio operations
 
-### Audio Recording & Processing
-1. User clicks record button → 
-2. startRecording() called from useAudioRecorder hook →
-3. MediaRecorder API captures microphone input → 
-4. WebAudioAPI analyzes audio for visualization → 
-5. On stop recording:
-   - For testing: Generate and download audio file
-   - For production: Send audio blob to backend via WebSocket → 
-6. Backend triggers "thinking" state (with 2-second delay in mock) → 
-7. AI response generated with both text and audio URL → 
-8. Response played through audio element and displayed with typing effect
+### Error Handling Pattern
+- **Try/Catch in Async Functions**: For capturing and handling errors
+- **Fallback Mechanisms**: Providing alternatives when primary methods fail
+- **Error Propagation**: Bubbling errors up to UI for user feedback
 
-### Session Completion
-1. User or AI indicates session end → 
-2. endSession() API call generates summary → 
-3. Frontend navigates to Summary page → 
-4. Summary displayed with rating option → 
-5. User can rate session and start a new one
+## Component Hierarchy
 
-### Persistence Flow
-1. Conversation stored in localStorage after each message → 
-2. Retrieved on page refresh or session restore → 
-3. Maintained in memory during active session → 
-4. Updated with each message exchange → 
-5. Deleted when explicitly removed by user
+```mermaid
+flowchart TD
+    subgraph App
+        RC[Root Component]
+    end
 
-## 4. Component Structure
+    subgraph Pages
+        KC[KukuCoach Page]
+    end
 
-### Key Components
-- **KukuCoach:** Main wrapper component for the coaching interface
-- **VoiceVisualization:** Displays audio waveform visualization with four distinct wave patterns
-- **RecordingButton:** Handles recording state and UI, changes appearance based on recording state
-- **AIMessage:** Displays AI responses with typing animation and glass effect styling
-- **ThinkingIndicator:** Shows "Kuku is thinking" state while AI generates a response
+    subgraph Components
+        RB[RecordingButton]
+        VV[VoiceVisualization]
+        AM[AIMessage]
+        TI[ThinkingIndicator]
+    end
 
-### Key Hooks
-- **useAudioRecorder:** Manages microphone access, recording, and real-time audio analysis
-  - Provides recording lifecycle control (start, stop, save)
-  - Handles errors and recovery mechanisms
-  - Manages resource cleanup to prevent memory leaks
-- **useAudioLevel:** Processes audio data for visualization
-- **useConversation:** Manages conversation state and history, integrates with storage
-- **useWebSocket:** Handles WebSocket connection and event management
-- **useThinking:** Manages the AI "thinking" state during response generation
+    subgraph Hooks
+        UAR[useAudioRecorder]
+        UAL[useAudioLevel]
+        US[useSession]
+    end
 
-### Backend Service Implementation
-- **services/api/index.ts:** Central API configuration and endpoints export
-- **services/api/conversation.ts:** Session and conversation management
-- **services/api/audio.ts:** Audio transcription and speech synthesis
-- **services/websocket/index.ts:** WebSocket connection and event handling
-- **services/websocket/events.ts:** Event types and interfaces
-- **services/storage/index.ts:** LocalStorage persistence for conversations
-- **services/mock/responses.ts:** Predefined AI responses for different conversation states
+    subgraph Services
+        AG[audio-generator]
+        MB[mock/backend]
+    end
 
-### Data Models
-```typescript
-// Conversation Model
-interface Conversation {
-  id: string;
-  startedAt: string;
-  lastUpdatedAt: string;
-  endedAt?: string;
-  messages: Message[];
-  summary?: string;
-  userRating?: number;
-}
-
-// Message Model
-interface Message {
-  id: string;
-  timestamp: string;
-  sender: 'user' | 'ai';
-  text: string;
-  audioUrl?: string;
-}
-
-// Audio Recording Models
-interface UseAudioRecorderResult {
-  audioBlob: Blob | null;
-  isRecording: boolean;
-  error: string | null;
-  recordingDuration: number;
-  startRecording: () => Promise<void>;
-  stopRecording: () => void;
-  saveRecording: (filename?: string) => void;
-}
+    RC --> KC
+    KC --> RB
+    KC --> VV
+    KC --> AM
+    KC --> TI
+    KC --> UAR
+    KC --> UAL
+    KC --> US
+    UAL --> VV
+    US --> MB
+    US --> AG
 ```
 
-### UI State Management
-- **Recording State:** Not recording → Recording → Processing → AI Speaking → Not recording
-- **Message Flow:** User Message → AI Thinking → AI Response → User Message (loop)
-- **Session Flow:** Start Screen → Active Session → Summary Screen → Start Screen
+## Data Flow Architecture
+
+### Conversation Flow
+```mermaid
+flowchart LR
+    IDLE[Idle State] -->|User clicks| REC[Recording]
+    REC -->|User stops| PROC[Processing]
+    PROC -->|Send to backend| RESP[Responding]
+    RESP -->|Audio finishes| IDLE
+```
+
+### Audio Visualization Flow
+```mermaid
+flowchart TD
+    MIC[Microphone Input] -->|During recording| ANLZ1[Audio Analysis]
+    AUD[Audio Element] -->|During playback| ANLZ2[Audio Analysis]
+    ANLZ1 -->|Same processing| FREQ[Frequency Data]
+    ANLZ2 -->|Same processing| FREQ
+    FREQ --> VIZ[Visualization Render]
+```

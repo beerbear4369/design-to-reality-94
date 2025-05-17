@@ -13,7 +13,6 @@ export function KukuCoach() {
   const latestBlobRef = React.useRef<Blob | null>(null);
   const audioPlayerRef = React.useRef<HTMLAudioElement | null>(null);
   const [isAISpeaking, setIsAISpeaking] = React.useState(false);
-  const [aiAudioLevel, setAIAudioLevel] = React.useState(0);
   
   // Get session context
   const { 
@@ -35,11 +34,22 @@ export function KukuCoach() {
     stopRecording
   } = useAudioRecorder();
   
-  // Visualization hook
-  const { audioLevel, frequencyData, error: audioLevelError } = useAudioLevel({ isRecording });
+  // Microphone audio level hook - activated during recording
+  const { 
+    audioLevel: micAudioLevel, 
+    frequencyData: micFrequencyData, 
+    error: audioLevelError 
+  } = useAudioLevel({ isRecording });
+
+  // AI audio level hook - connected to the audio player element
+  const {
+    audioLevel: aiAudioLevel,
+    frequencyData: aiFrequencyData,
+    error: aiAudioError
+  } = useAudioLevel({ audioElement: audioPlayerRef.current });
 
   // Combined error state
-  const error = recorderError || audioLevelError || sessionError;
+  const error = recorderError || audioLevelError || sessionError || aiAudioError;
 
   // Latest message for display
   const latestMessage = React.useMemo(() => {
@@ -57,45 +67,6 @@ export function KukuCoach() {
     }
   }, [audioBlob]);
 
-  // Simulate audio levels for AI speech
-  React.useEffect(() => {
-    let animationId: number;
-    
-    if (isAISpeaking) {
-      let time = 0;
-      
-      const animateAIAudioLevel = () => {
-        // Generate a somewhat natural looking audio level pattern
-        // Base level with some randomness
-        const base = 0.3 + Math.random() * 0.1;
-        
-        // Add sine wave modulation 
-        const sineModulation = Math.sin(time) * 0.15;
-        
-        // Add occasional peaks
-        const peaks = Math.random() > 0.9 ? Math.random() * 0.4 : 0;
-        
-        // Combined level with clamping
-        const level = Math.max(0, Math.min(1, base + sineModulation + peaks));
-        
-        setAIAudioLevel(level);
-        time += 0.1;
-        
-        animationId = requestAnimationFrame(animateAIAudioLevel);
-      };
-      
-      animateAIAudioLevel();
-    } else {
-      setAIAudioLevel(0);
-    }
-    
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-  }, [isAISpeaking]);
-
   // Play audio when a new AI message is received
   React.useEffect(() => {
     // Only play audio if the session is in the responding state
@@ -104,7 +75,7 @@ export function KukuCoach() {
       
       // Only play audio for AI messages with an audioUrl
       if (latestMessage.sender === "ai" && latestMessage.audioUrl) {
-        console.log(`Playing AI response audio from URL`);
+        console.log(`Playing AI response audio from URL: ${latestMessage.audioUrl}`);
         
         // Create audio element if it doesn't exist
         if (!audioPlayerRef.current) {
@@ -144,6 +115,46 @@ export function KukuCoach() {
             })
             .catch(err => {
               console.warn(`Audio playback failed (attempt ${attempts + 1}/3):`, err);
+              
+              // In development mode, if we're using mock audio files that don't exist,
+              // create a temporary oscillator-based sound for testing visualization
+              if (latestMessage.audioUrl.startsWith('/mock-audio/') && attempts === 2) {
+                console.warn("Using fallback audio oscillator for mock audio file");
+                
+                // Create an oscillator for testing
+                const audioContext = new AudioContext();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // Configure the oscillator
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                
+                // Connect the oscillator to gain node and then to destination
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Start the oscillator and set a timeout to stop it
+                oscillator.start();
+                
+                // Set up the audio analysis for visualization
+                const analyser = audioContext.createAnalyser();
+                gainNode.connect(analyser);
+                analyser.fftSize = 256;
+                
+                // Start the visualization
+                setIsAISpeaking(true);
+                
+                // Stop after 5 seconds
+                setTimeout(() => {
+                  oscillator.stop();
+                  audioContext.close();
+                  setIsAISpeaking(false);
+                  setSessionStatus("idle");
+                }, 5000);
+                
+                return;
+              }
               
               if (attempts < 2) {
                 // Retry with a small delay
@@ -322,13 +333,8 @@ export function KukuCoach() {
           <div className="w-[300px] h-[300px] relative">
             <VoiceVisualization 
               isRecording={isRecording || isAISpeaking} 
-              audioLevel={isRecording ? audioLevel : aiAudioLevel}
-              frequencyData={{
-                low: isRecording ? frequencyData.low : aiAudioLevel * 0.8,
-                mid: isRecording ? frequencyData.mid : aiAudioLevel,
-                high: isRecording ? frequencyData.high : aiAudioLevel * 0.5,
-                overall: isRecording ? frequencyData.overall : aiAudioLevel * 0.7
-              }}
+              audioLevel={isRecording ? micAudioLevel : aiAudioLevel}
+              frequencyData={isRecording ? micFrequencyData : aiFrequencyData}
             />
           </div>
         </div>
@@ -338,7 +344,7 @@ export function KukuCoach() {
         
         {/* Message container */}
         <div className="min-h-[100px] flex items-center justify-center w-full px-6 mt-[20px]">
-          <AIMessage 
+        <AIMessage 
             message={getMessageText()}
             isTyping={shouldShowTypingAnimation}
           />
