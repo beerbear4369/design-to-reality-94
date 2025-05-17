@@ -246,6 +246,15 @@ export function useAudioLevel({ isRecording = false, audioElement = null }: UseA
         }
       }
       
+      // If this audio element has been connected before, don't try to reconnect
+      if (connectedAudioElements.has(audioElement)) {
+        console.log("Audio element already connected to a MediaElementSourceNode, skipping connection");
+        
+        // Just start analyzing without creating a new connection
+        animationFrameRef.current = requestAnimationFrame(analyzeAudioData);
+        return;
+      }
+      
       // Clean up any existing connections before setting up new ones
       cleanupAudioContext();
       
@@ -257,11 +266,6 @@ export function useAudioLevel({ isRecording = false, audioElement = null }: UseA
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256; // Must be a power of 2
       analyserRef.current = analyser;
-      
-      // Check if this audio element has been connected before
-      if (connectedAudioElements.has(audioElement)) {
-        console.log("Audio element was previously connected. Creating new connection.");
-      }
       
       // Create a source from the audio element
       const source = audioContext.createMediaElementSource(audioElement);

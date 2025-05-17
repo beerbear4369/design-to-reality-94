@@ -17,14 +17,25 @@ export function saveConversation(id: string, data: any): void {
   try {
     // Store the individual conversation
     const key = `${CONVERSATION_KEY}:${id}`;
-    localStorage.setItem(key, JSON.stringify(data));
+    const serializedData = JSON.stringify(data);
+    
+    console.log(`Storage: Saving conversation with key: ${key}`);
+    localStorage.setItem(key, serializedData);
+    
+    // Verify the save
+    const savedData = localStorage.getItem(key);
+    if (!savedData) {
+      console.error(`Storage: Failed to save conversation: ${id}`);
+    } else if (savedData !== serializedData) {
+      console.error(`Storage: Data mismatch after save for: ${id}`);
+    }
     
     // Update the session list
     updateSessionList(id, data);
     
-    console.log(`Saved conversation: ${id}`);
+    console.log(`Storage: Saved conversation: ${id}`);
   } catch (error) {
-    console.error('Error saving conversation:', error);
+    console.error('Storage: Error saving conversation:', error);
   }
 }
 
@@ -36,15 +47,17 @@ export function saveConversation(id: string, data: any): void {
 export function getConversation(id: string): any {
   try {
     const key = `${CONVERSATION_KEY}:${id}`;
+    console.log(`Storage: Retrieving conversation with key: ${key}`);
     const data = localStorage.getItem(key);
     
     if (!data) {
+      console.warn(`Storage: No data found for conversation: ${id}`);
       return null;
     }
     
     return JSON.parse(data);
   } catch (error) {
-    console.error('Error retrieving conversation:', error);
+    console.error('Storage: Error retrieving conversation:', error);
     return null;
   }
 }

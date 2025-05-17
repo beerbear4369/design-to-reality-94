@@ -19,7 +19,7 @@ export function AIMessage({
   
   // Handle message changes and typing animation
   useEffect(() => {
-    // If not in typing mode, just show the full message
+    // If not in typing mode, just show the full message immediately
     if (!isTyping) {
       setDisplayedText(message);
       setIsComplete(true);
@@ -28,6 +28,7 @@ export function AIMessage({
     
     // If the message changed, reset and start typing from beginning
     if (previousMessageRef.current !== message) {
+      console.log(`Starting typing animation for: "${message}"`);
       previousMessageRef.current = message;
       setDisplayedText("");
       setIsComplete(false);
@@ -35,6 +36,7 @@ export function AIMessage({
       // Clear any existing typing animation
       if (typingTimerRef.current !== null) {
         clearTimeout(typingTimerRef.current);
+        typingTimerRef.current = null;
       }
       
       // Only start typing if there's content
@@ -57,6 +59,7 @@ export function AIMessage({
             // Typing is complete
             setIsComplete(true);
             typingTimerRef.current = null;
+            console.log("Typing animation complete");
           }
         };
         
@@ -69,6 +72,7 @@ export function AIMessage({
     return () => {
       if (typingTimerRef.current !== null) {
         clearTimeout(typingTimerRef.current);
+        typingTimerRef.current = null;
       }
     };
   }, [message, isTyping, typingSpeed]);

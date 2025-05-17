@@ -8,9 +8,17 @@
 - **Container/Presentational Pattern**: Separating logic from presentation concerns
 
 ### Data Flow
-- **Context API for Global State**: SessionContext maintains global conversation state
+- **Context API for Global State**: SessionContext maintains global session state (not conversation history)
+- **Custom Hooks for State Management**: useConversation maintains conversation state
 - **Unidirectional Data Flow**: State flows down, events bubble up
 - **Custom Hooks for Reusable Logic**: Encapsulating complex logic like audio handling in custom hooks
+
+### Backend Communication Pattern
+- **REST API with Session-Based Design**: REST API approach with clear separation from UI state
+- **Session Initialization**: Create session before starting conversation
+- **Audio Message Exchange**: Send audio with session context, receive text and audio responses
+- **Conversation History**: Retrieve history based on session ID
+- **Separation of Concerns**: UI state separate from backend communication
 
 ### Audio Processing Pipeline
 ```mermaid
@@ -29,8 +37,8 @@ flowchart TD
     end
 
     subgraph Backend Integration
-        BLOB --> SEND[Send to Backend]
-        SEND --> |Process| RESP[AI Response]
+        BLOB --> API[REST API Call]
+        API --> |Process| RESP[AI Response]
         RESP --> TXT[Text]
         RESP --> AUD[Audio URL]
     end
@@ -50,10 +58,18 @@ flowchart TD
 ## Key Design Patterns
 
 ### State Management
-- **React Context API**: For global application state
+- **React Context API**: For global session state (status, ID)
+- **Custom Hooks**: For conversation state management
 - **useState**: For component-local state
 - **useRef**: For maintaining references across renders
 - **localStorage**: For persisting session data between page reloads
+
+### Session Management
+- **Session Initialization**: Create session ID at startup
+- **Session Context**: Maintain session ID across interactions
+- **Session Persistence**: Store session ID in localStorage
+- **History Retrieval**: Fetch conversation history by session ID
+- **Clear Separation**: Session UI state separate from conversation data
 
 ### Audio Processing Pattern
 - **Web Audio API**: For real-time audio processing and analysis
@@ -94,11 +110,12 @@ flowchart TD
         UAR[useAudioRecorder]
         UAL[useAudioLevel]
         US[useSession]
+        UC[useConversation]
     end
 
     subgraph Services
         AG[audio-generator]
-        MB[mock/backend]
+        API[api-service]
     end
 
     RC --> KC
@@ -106,12 +123,43 @@ flowchart TD
     KC --> VV
     KC --> AM
     KC --> TI
-    KC --> UAR
-    KC --> UAL
-    KC --> US
+    KC --> UC
+    UC --> UAR
+    UC --> UAL
+    UC --> US
+    UC --> API
     UAL --> VV
-    US --> MB
+    US --> API
     US --> AG
+```
+
+## New Architecture
+
+```mermaid
+flowchart TD
+    subgraph UI Layer
+        KC[KukuCoach]
+        RB[RecordingButton]
+        VV[VoiceVisualization]
+    end
+    
+    subgraph State Management Layer
+        SC[SessionContext] --> SS[Session State]
+        UC[useConversation Hook] --> MS[Message State]
+        SC <-- Status Updates --> UC
+    end
+    
+    subgraph Service Layer
+        API[Session API]
+        AG[Audio Generator]
+    end
+    
+    KC --> RB
+    KC --> VV
+    KC --> UC
+    RB --> UC
+    UC --> API
+    API --> AG
 ```
 
 ## Data Flow Architecture
@@ -119,10 +167,35 @@ flowchart TD
 ### Conversation Flow
 ```mermaid
 flowchart LR
-    IDLE[Idle State] -->|User clicks| REC[Recording]
-    REC -->|User stops| PROC[Processing]
-    PROC -->|Send to backend| RESP[Responding]
-    RESP -->|Audio finishes| IDLE
+    subgraph Session Lifecycle
+        INIT[Initialize Session] -->|Create Session ID| READY[Ready State]
+        READY -->|End Session| SUMMARY[Session Summary]
+    end
+    
+    subgraph Conversation Flow
+        IDLE[Idle State] -->|User clicks| REC[Recording]
+        REC -->|User stops| PROC[Processing]
+        PROC -->|API Call| RESP[Responding]
+        RESP -->|Audio finishes| IDLE
+    end
+```
+
+### API Communication Flow
+```mermaid
+flowchart TD
+    subgraph Session Management
+        CS[Create Session] -->|POST /api/sessions/create| SID[Session ID]
+        SID -->|Store in Context| READY[Ready State]
+        READY -->|GET /api/sessions/{id}/history| HIST[Load History]
+        READY -->|PUT /api/sessions/{id}/end| END[End Session]
+    end
+    
+    subgraph Message Exchange
+        REC[Audio Recording] -->|Record Complete| BLOB[Audio Blob]
+        BLOB -->|POST /api/sessions/{id}/audio| PROC[Process Audio]
+        PROC -->|Backend Processing| RESP[Response]
+        RESP -->|Text & Audio URL| DISP[Display & Play]
+    end
 ```
 
 ### Audio Visualization Flow

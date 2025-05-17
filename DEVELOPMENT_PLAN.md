@@ -4,10 +4,11 @@
 
 *   **Routing:** We'll use React Router for three main screens: `/` (Start), `/session` (Active Coaching), and `/summary` (Session Summary).
 *   **State Management:** We'll start with React Context API for managing application state (e.g., current screen, session ID, conversation messages, recording status). If complexity grows significantly, we can consider a dedicated library like Zustand.
-*   **API Interaction (Placeholders):**
-    *   **Start Session:** `POST /api/session/start` (Payload: e.g., user preferences if any) -> Returns: `{ sessionId: "unique-session-id" }`.
-    *   **Send User Voice:** `POST /api/session/{sessionId}/audio` (Payload: audio file e.g., MP3 in FormData) -> Returns: `{ aiResponseText: "...", aiAudioUrl: "..." }`.
-    *   **End Session & Get Summary:** `POST /api/session/{sessionId}/end` (or a specific API like `GET /api/session/{sessionId}/summary`) -> Returns: `{ summaryText: "...", coachingExperienceRating: null }`.
+*   **API Interaction:**
+    *   **Create Session:** `POST /api/sessions/create` -> Returns: `{ sessionId: "unique-session-id" }`.
+    *   **Send User Voice:** `POST /api/sessions/{sessionId}/audio` (Payload: audio file blob in FormData) -> Returns: `{ messageId: "msg-123", text: "AI response text", audioUrl: "url-to-audio-file" }`.
+    *   **Get Conversation History:** `GET /api/sessions/{sessionId}/history` -> Returns: Array of conversation messages.
+    *   **End Session & Get Summary:** `PUT /api/sessions/{sessionId}/end` -> Returns: `{ summaryText: "...", coachingExperienceRating: null }`.
 *   **Audio Handling:** We'll use the browser's `MediaRecorder` API for recording and standard HTML5 audio elements for playback.
 *   **UI Components:** Continue leveraging Shadcn/UI and Tailwind CSS.
 *   **"View Session History":** This will be a placeholder initially and can be implemented in a later phase.
@@ -16,7 +17,7 @@
 
 ## Development Plan: Kuku Coach Frontend
 
-**Phase 0: Project Review & Memory Bank Initialization (Ongoing)**
+**Phase 0: Project Review & Memory Bank Initialization (Completed)**
 
 *   **Task:** Briefly review the current setup (Vite, React, TypeScript, Shadcn/UI, routing, existing `kuku-coach` components).
 *   **Memory Bank:**
@@ -27,7 +28,7 @@
     *   Create `activeContext.md`: Set the current focus on initial planning and UI scaffolding.
     *   Create `progress.md`: Mark initial setup as complete, planning phase in progress.
 
-**Phase 1: UI Scaffolding & Basic Routing**
+**Phase 1: UI Scaffolding & Basic Routing (Completed)**
 
 *   **Goal:** Create the basic page components for each of the three main views and set up navigation.
 *   **Tasks:**
@@ -42,7 +43,7 @@
     3.  Ensure basic navigation works between these empty/placeholder pages.
 *   **Memory Bank:** Update `activeContext.md` and `progress.md`. Add routing decisions to `systemPatterns.md`.
 
-**Phase 2: Implementing the Start Screen**
+**Phase 2: Implementing the Start Screen (Completed)**
 
 *   **Goal:** Build the UI for the "Start Session" screen as per the image.
 *   **Tasks:**
@@ -51,12 +52,12 @@
         *   Add "Your AI Coaching Assistant" subtitle.
         *   Add a "Start Session" button (using Shadcn/UI `Button`).
     2.  Implement navigation: Clicking "Start Session" should:
-        *   (Placeholder) Make an API call to the backend to initiate a session (e.g., `POST /api/session/start`).
+        *   Make an API call to the backend to initiate a session (e.g., `POST /api/sessions/create`).
         *   Store the `sessionId` (from API response) in a global state (React Context).
         *   Navigate the user to the `ActiveSessionPage` (e.g., `/session/THE_NEW_SESSION_ID`).
 *   **Memory Bank:** Update `activeContext.md` and `progress.md`. Document UI components in `systemPatterns.md`.
 
-**Phase 3: Implementing the Active Session Screen - UI & Initial State**
+**Phase 3: Implementing the Active Session Screen - UI & Initial State (Completed)**
 
 *   **Goal:** Build the static UI elements for the active coaching screen.
 *   **Tasks:**
@@ -69,7 +70,7 @@
     2.  Style all elements according to the design.
 *   **Memory Bank:** Update `activeContext.md`, `progress.md`.
 
-**Phase 4: Core Voice Interaction Logic**
+**Phase 4: Core Voice Interaction Logic (Completed, Ready for API Transition)**
 
 *   **Goal:** Implement the record, send, receive, and play audio functionality.
 *   **Tasks (within `ActiveSessionPage.tsx` and related components/hooks):**
@@ -79,24 +80,24 @@
         *   On stopping recording (e.g., clicking again or after a pause): Get the recorded audio data (e.g., as a Blob).
     2.  **Sending Audio:**
         *   Convert audio blob to a suitable format if needed (e.g., MP3 - might require a library, or send raw format if backend supports it).
-        *   Send the audio file to the backend API (e.g., `POST /api/session/{sessionId}/audio`).
+        *   Send the audio file to the backend API.
         *   Update UI to show "processing" or "waiting for AI response".
     3.  **Receiving & Displaying AI Response:**
         *   On successful API response:
             *   Receive the AI's text reply and the URL to its audio response.
             *   Display the AI's text reply on the screen (e.g., append to a chat-like interface or update a dedicated area).
             *   Automatically play the AI's audio response using an HTML audio element.
-            *   Update the voice visualization if it's meant to react to AI speech too.
+            *   Update the voice visualization to react to AI speech.
     4.  **Conversation Loop:** Allow the user to record and send another message after the AI responds.
 *   **Memory Bank:** Update `activeContext.md`, `progress.md`. Document voice interaction flow and API details in `systemPatterns.md` and `techContext.md`.
 
-**Phase 5: Implementing the Session Summary Screen**
+**Phase 5: Implementing the Session Summary Screen (Completed)**
 
 *   **Goal:** Build the UI and basic functionality for the session summary screen.
 *   **Tasks:**
     1.  In `SessionSummaryPage.tsx`:
         *   Display "Session Summary" title.
-        *   Display the coaching session focus text (received from backend API, e.g., `GET /api/session/{sessionId}/summary`).
+        *   Display the coaching session focus text (received from backend API, e.g., `GET /api/sessions/{sessionId}/summary`).
         *   Display "How was your coaching experience?"
         *   Add a star rating component (Shadcn/UI doesn't have one by default, might need a custom component or simple static stars for now).
         *   Add a "Start New Session" button. Clicking this should navigate the user back to the `StartSessionPage` (`/`).
@@ -104,27 +105,64 @@
     2.  Implement navigation: When the backend signals the session end (or user explicitly ends it via UI if that's a feature), navigate to this `SessionSummaryPage`.
 *   **Memory Bank:** Update `activeContext.md`, `progress.md`.
 
-**Phase 6: State Management & Full API Integration**
+**Phase 6: REST API Integration (In Progress)**
 
-*   **Goal:** Solidify state management and replace all placeholder API calls with actual integrations.
+*   **Goal:** Implement REST API services to replace WebSocket communication.
 *   **Tasks:**
-    1.  Refine React Context or implement a more robust state management solution (if needed) to handle:
-        *   Current session ID.
-        *   Conversation history (user messages, AI responses).
-        *   Recording status, loading states for API calls.
-        *   Session summary data.
-    2.  Replace all placeholder API calls with actual `fetch` or `axios` (if installed) requests to your defined backend endpoints.
-    3.  Implement proper loading indicators for all API interactions.
-    4.  Implement robust error handling for API calls (displaying user-friendly messages).
-*   **Memory Bank:** Update all relevant files, especially `systemPatterns.md` with final API contracts and `techContext.md` if new libraries are added. `progress.md` reflects full feature implementation.
+    1.  **API Service Implementation:**
+        *   Create `/services/api/session.ts` with core API methods:
+            *   `createSession()`: Initialize a new conversation session
+            *   `sendAudio(sessionId, audioBlob)`: Send audio and get AI response
+            *   `getHistory(sessionId)`: Retrieve conversation history
+            *   `endSession(sessionId)`: End current session
+        *   Implement proper error handling and request/response types
+    2.  **Session Management:**
+        *   Update SessionContext to handle session initialization
+        *   Store session ID in context and localStorage
+        *   Implement history retrieval and management
+    3.  **useConversation Hook Update:**
+        *   Remove WebSocket-specific code
+        *   Implement REST API calls for audio processing
+        *   Maintain state transitions (idle → recording → processing → responding → idle)
+    4.  **Component Updates:**
+        *   Update RecordingButton to work with REST API approach
+        *   Ensure KukuCoach component properly handles session status
+        *   Maintain visualization during recording and playback
+*   **Memory Bank:** Update all relevant files, especially `systemPatterns.md` with REST API details and `techContext.md`.
 
-**Phase 7: Refinements, Styling, and Testing**
+**Phase 7: Refinements, Testing and Production Readiness**
 
-*   **Goal:** Polish the application, ensure it matches the design, and test thoroughly.
+*   **Goal:** Polish the application, test thoroughly, and prepare for production integration.
 *   **Tasks:**
-    1.  Fine-tune all styling to closely match the provided image (colors, fonts, spacing, layout).
-    2.  Ensure responsiveness if the app is intended for different screen sizes (mobile focus noted).
-    3.  Test all user flows and interactions.
-    4.  Address any bugs or edge cases found.
-    5.  Consider accessibility improvements.
-*   **Memory Bank:** Final review and update of all Memory Bank documents to reflect the completed state. Update `progress.md` to "Completed" or list known issues/future enhancements. 
+    1.  **Testing:**
+        *   Test full conversation flow with REST API
+        *   Verify proper state transitions
+        *   Test error scenarios and recovery
+        *   Ensure audio visualization works during both recording and playback
+    2.  **Optimization:**
+        *   Optimize audio file format for faster uploads
+        *   Improve loading and transition states
+        *   Implement proper loading indicators
+    3.  **Production Preparation:**
+        *   Document API endpoints and response formats
+        *   Prepare for integration with actual backend services
+        *   Implement environment-specific configuration
+*   **Memory Bank:** Final review and update of all Memory Bank documents to reflect the completed state. Update `progress.md` to reflect current status and next steps.
+
+**Phase 8: Real Backend Integration**
+
+*   **Goal:** Replace mock services with real backend APIs.
+*   **Tasks:**
+    1.  **API Integration:**
+        *   Connect to real backend endpoints
+        *   Implement authentication if required
+        *   Update API service to handle production response formats
+    2.  **Error Handling:**
+        *   Implement robust error handling for production scenarios
+        *   Add retry mechanisms for transient failures
+        *   Provide user-friendly error messages
+    3.  **Performance Monitoring:**
+        *   Add logging for key interactions
+        *   Implement analytics for user engagement metrics
+        *   Set up error tracking for production issues
+*   **Memory Bank:** Update technical documentation to reflect production integration. Maintain updated API specifications. 

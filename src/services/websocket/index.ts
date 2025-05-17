@@ -119,19 +119,20 @@ class MockWebSocketService implements WebSocketService {
           
           // Simulate AI thinking time (2 seconds)
           setTimeout(() => {
-            // Send text response
+            // Generate a unique message ID
+            const messageId = `msg-${Date.now()}`;
+            const responseText = this.getRandomResponse();
+            const audioNumber = Math.floor(Math.random() * 5) + 1;
+            const audioUrl = `/mock-audio/response-${audioNumber}.mp3`;
+            
+            // Send combined response with text and audio URL
             this.triggerEvent('server:response', {
-              text: this.getRandomResponse(),
-              messageId: `msg-${Date.now()}`
+              text: responseText,
+              messageId: messageId,
+              audioUrl: audioUrl
             });
             
-            // Send audio response shortly after
-            setTimeout(() => {
-              this.triggerEvent('server:audio-response', {
-                audioUrl: `/mock-audio/response-${Math.floor(Math.random() * 5) + 1}.mp3`,
-                messageId: `msg-${Date.now()}`
-              });
-            }, 200);
+            // No separate audio response event
           }, 2000);
         }, 500);
         break;

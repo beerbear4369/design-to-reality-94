@@ -1,19 +1,26 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
+interface UseAudioRecorderProps {
+  isRecording?: boolean;
+  audioFormat?: string;
+}
+
 interface UseAudioRecorderResult {
   audioBlob: Blob | null;
-  isRecording: boolean;
-  error: string | null;
+  error: Error | null;
   recordingDuration: number;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   saveRecording: (filename?: string) => void;
+  resetAudioBlob: () => void;
 }
 
-export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRecorderResult {
+export function useAudioRecorder({ 
+  isRecording = false, 
+  audioFormat = 'audio/webm' 
+}: UseAudioRecorderProps = {}): UseAudioRecorderResult {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -131,19 +138,12 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
         } else {
           console.log("No audio data collected in onstop handler");
         }
-        
-        setIsRecording(false);
       };
       
       recorder.onerror = (event) => {
         console.error("MediaRecorder error:", event);
-        setError("An error occurred during recording.");
-        setIsRecording(false);
+        setError(new Error("An error occurred during recording."));
       };
-      
-      // Update state to show recording before actually starting
-      // This provides visual feedback before audio capture begins
-      setIsRecording(true);
       
       // Start duration tracking
       startTimeRef.current = Date.now();
@@ -163,8 +163,7 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
       
     } catch (err) {
       console.error("Error starting recording:", err);
-      setError("Error accessing microphone. Please check permissions.");
-      setIsRecording(false);
+      setError(err instanceof Error ? err : new Error("Error accessing microphone. Please check permissions."));
       cleanup();
     }
   }, [audioFormat, cleanup, processRecording]);
@@ -176,7 +175,6 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
     // If the MediaRecorder hasn't started yet for some reason, do nothing
     if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
       console.log("No active MediaRecorder to stop");
-      setIsRecording(false);
       return;
     }
     
@@ -239,13 +237,10 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
           } else {
             console.log("No audio data collected in onstop handler or already processed");
           }
-          
-          setIsRecording(false);
         };
       }
     } catch (err) {
       console.error("Error stopping MediaRecorder:", err);
-      setIsRecording(false);
       
       // Try to recover by manually processing the data
       if (audioChunksRef.current.length > 0 && !hasProcessed) {
@@ -286,6 +281,21 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
     console.log(`Recording saved as ${fullFilename}`);
   }, [audioBlob]);
 
+  // Reset audio blob
+  const resetAudioBlob = useCallback(() => {
+    setAudioBlob(null);
+    audioChunksRef.current = [];
+  }, []);
+
+  // React to isRecording prop changes
+  useEffect(() => {
+    if (isRecording && !mediaRecorderRef.current) {
+      startRecording();
+    } else if (!isRecording && mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      stopRecording();
+    }
+  }, [isRecording, startRecording, stopRecording]);
+
   // Clean up on unmount
   useEffect(() => {
     return () => {
@@ -295,11 +305,11 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
 
   return {
     audioBlob,
-    isRecording,
     error,
     recordingDuration,
     startRecording,
     stopRecording,
-    saveRecording
+    saveRecording,
+    resetAudioBlob
   };
 } 

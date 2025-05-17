@@ -8,6 +8,8 @@ export const CLIENT_EVENTS = {
   START_RECORDING: 'client:start-recording',
   AUDIO_DATA: 'client:audio-data',
   STOP_RECORDING: 'client:stop-recording',
+  START_SESSION: 'client:start-session',
+  END_SESSION: 'client:end-session',
 };
 
 // Server-to-Client Events
@@ -30,12 +32,15 @@ export const CONNECTION_EVENTS = {
 // Event Data Types
 export interface AudioDataEvent {
   chunk: Blob | ArrayBuffer;
+  text?: string;
+  messageId?: string;
   timestamp: number;
 }
 
 export interface ResponseEvent {
   text: string;
   messageId: string;
+  audioUrl?: string;
 }
 
 export interface AudioResponseEvent {
@@ -46,4 +51,8 @@ export interface AudioResponseEvent {
 export interface ErrorEvent {
   code: string;
   message: string;
+}
+
+export interface SessionEvent {
+  sessionId: string;
 } 

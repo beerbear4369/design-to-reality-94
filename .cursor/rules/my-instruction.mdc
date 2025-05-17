@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+-Never go to implement and bug fix until you find the root cause of the problem, spend more time to find root cause before fixing anything.
+-If you unable to find the real rootcause you could prompt user to do testing or prompt user for input.
+-Never start to build anything Until You are ninety person confidence about the user requirement, ask classification question.
+-When think of some new approach for implementation when fixing bug, don't implement it right away, propose to user and let user confirm before you implement any design.
+-Every time you finish a small function of featuretest it with browser tool sto iterate before moving to the next feature
+
+-Dont create new "run npm run dev" after development feature or fixed bug. I will manually create one, we just use this one to test the updated code etc.

@@ -1,112 +1,88 @@
-# Tech Context: Kuku Coach
+# Technical Context
 
-## 1. Tech Stack
+## Technology Stack
 
 ### Frontend
-- **Framework:** React with TypeScript
-- **Build Tool:** Vite
-- **UI Components:** Shadcn/UI 
-- **Styling:** Tailwind CSS
-- **Routing:** React Router DOM
-- **Data Fetching:** TanStack Query (React Query)
-- **State Management:** React Context API (initial approach)
-
-### Voice & Audio
-- **Recording:** Web Audio API & MediaRecorder API
-- **Playback:** HTML5 Audio Element
-- **Visualization:** Custom visualization components with SVG:
-  - `voice-visualization.tsx` - Four-layer wave visualization with animated mask
-  - `audio-wave-generator.ts` - Wave path generation algorithms
-  - Dynamic frequency-based amplitude modulation
-
-### Mock Backend
-- **API Service:** Modular services in `/services/api/`
-- **WebSocket:** Custom WebSocket implementation in `/services/websocket/`
-- **Storage:** LocalStorage-based persistence in `/services/storage/`
-- **Mock Responses:** Predefined response patterns in `/services/mock/responses.ts`
-
-## 2. Development Setup
-
-The project is set up with Vite and uses the following structure:
-- `/src`: Main source code
-- `/src/components`: Reusable UI components
-- `/src/components/kuku-coach`: Specific components for the Kuku Coach application
-- `/src/pages`: Page-level components
-- `/src/services`: Backend service implementations
-  - `/src/services/api`: REST API endpoints
-  - `/src/services/websocket`: WebSocket communication
-  - `/src/services/storage`: Data persistence
-  - `/src/services/mock`: Mock data and responses
-- `/src/hooks`: Custom React hooks
-- `/src/lib`: Utility functions/helpers
-- `/src/context`: React Context providers
-
-## 3. Technical Implementation
-
-### Voice Visualization
-The voice visualization uses SVG-based waveforms with multiple layers:
-- Four distinct waveform types (smooth, complex, dynamic, asymmetric)
-- Each wave responds to different frequency ranges
-- Real-time animation with variable speed and amplitude
-- Mask-based circular clipping
-- Dynamic color gradients with glow effects
-- Responsive to audio input levels
-- Performance-optimized with controlled animation framerate
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **UI Components**: Shadcn UI (based on Radix UI primitives)
+- **Styling**: Tailwind CSS
+- **State Management**: React Context API + Custom Hooks
+- **Routing**: React Router v6
 
 ### Audio Processing
-- Audio capture using MediaRecorder API
-- Real-time audio analysis with AudioContext and AnalyserNode
-- Frequency analysis using Fast Fourier Transform (FFT)
-- Audio level detection for visualization reactivity
-- Blob-based audio storage for API transmission
+- **Recording**: MediaRecorder API
+- **Audio Analysis**: Web Audio API (AudioContext, AnalyserNode)
+- **Visualization**: SVG-based audio visualization
+- **Playback**: HTML5 Audio API
 
-### WebSocket Communication
-- Custom WebSocket wrapper with event-based architecture
-- Bidirectional communication between client and mock server
-- Event typing for type safety
-- Simulated server-side processing delays
-- Automatic reconnection handling
+### Backend Communication (Mock Implementation)
+- **API Pattern**: REST-based
+- **Session Management**: Session ID-based persistence
+- **Storage**: LocalStorage with robust error handling
+- **Data Format**: JSON
 
-## 4. Technical Constraints
+### Testing
+- **Component Testing**: Coming soon
+- **Integration Testing**: Coming soon
+- **Mock API Testing**: Manual testing with browser console
 
-- Browser API limitations for audio recording (browser compatibility)
-- Security considerations for microphone access (requires user permission)
-- Potential latency in audio transfer and processing
-- Browser requirements for MediaRecorder API (not supported in all browsers/versions)
-- LocalStorage limitations for data persistence (size and persistence)
+## Technical Architecture
 
-## 5. Dependencies
+### Component Architecture
+- **Atomic Design Principles**: Building complex interfaces from simple components
+- **Composition over Inheritance**: Favoring component composition
+- **Container/Presentational Pattern**: Separating logic from presentation
 
-Key dependencies in the project include:
-- React v18
-- React Router v6
-- TanStack Query v5
-- Various Radix UI components (via Shadcn/UI)
-- Tailwind CSS
+### State Management
+- **Context API**: For application-wide state (session information)
+- **Custom Hooks**: For encapsulating complex logic (audio processing, API communication)
+- **Prop Drilling Avoidance**: Using context for deep component trees
 
-Audio-specific features rely on the browser's built-in MediaRecorder API and Web Audio API.
+### Data Flow
+- **Unidirectional Data Flow**: State flows down, events bubble up
+- **Event-Driven Communication**: Using events for component interactions
+- **Async/Await Pattern**: For API calls and audio processing
 
-## 6. API Integration
+## Technical Challenges
 
-The mock backend implements these endpoints:
+### Resolved Challenges
+- **Audio Visualization**: Creating responsive visualizations for both input and output
+- **Media Permissions**: Handling browser permissions for microphone access
+- **Audio Processing**: Managing audio resource lifecycle correctly
+- **Concurrent Audio Issues**: Fixed issues with multiple audio playback
+- **Storage Race Conditions**: Resolved timing issues with localStorage operations
+- **Session Management**: Improved session ID consistency and verification
 
-### REST API
-- `POST /api/session` - Create new session
-- `GET /api/session/{id}` - Get session by ID
-- `PUT /api/session/{id}` - Update session
-- `DELETE /api/session/{id}` - Delete session
-- `POST /api/session/{id}/end` - End session and get summary
-- `POST /api/audio/transcribe` - Convert audio to text
-- `POST /api/audio/synthesize` - Generate speech from text
+### Current Challenges
+- **Browser Compatibility**: Ensuring consistent behavior across modern browsers
+- **Error Recovery**: Implementing graceful degradation for API failures
+- **Mock to Real API Transition**: Preparing for integration with actual backend
 
-### WebSocket Events
-**Client to Server:**
-- `client:start-recording` - Indicate recording start
-- `client:audio-data` - Send audio chunk
-- `client:stop-recording` - Indicate recording end
+## Technical Decisions
 
-**Server to Client:**
-- `server:recording-started` - Acknowledge recording
-- `server:thinking` - AI is processing
-- `server:response` - Text response
-- `server:audio-response` - Audio URL for playback 
+### Architecture Decisions
+- **REST Over WebSockets**: Switched from WebSockets to REST API for simpler interaction model
+- **Session-Based Design**: Using session IDs to maintain conversation context
+- **Separation of Concerns**: Clear boundaries between UI state and API communication
+- **Single Source of Truth**: useConversation hook as sole interface to backend
+
+### Implementation Decisions
+- **TypeScript Everywhere**: Strong typing for all components and functions
+- **Functional Components**: Using React functional components with hooks
+- **Defensive Programming**: Thorough error handling and fallback mechanisms
+- **Progressive Enhancement**: Core functionality works with limited browser features
+
+## Future Technical Direction
+
+### Short-term Technical Goals
+- Prepare for real backend integration
+- Implement comprehensive error handling
+- Add automated testing
+- Optimize performance for mobile devices
+
+### Medium-term Technical Goals
+- Add offline support with IndexedDB
+- Implement advanced audio processing features
+- Add analytics and telemetry
+- Support for different audio formats and quality levels
