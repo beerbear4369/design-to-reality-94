@@ -37,7 +37,7 @@ export function RecordingButton({
       )}
       
       {/* Recording button */}
-      <button
+    <button
         className={`
           flex w-16 h-16 items-center justify-center rounded-full 
           focus:outline-none focus:ring-2 focus:ring-white/50 
@@ -49,9 +49,9 @@ export function RecordingButton({
           }
           ${error ? "border-2 border-red-400" : ""}
         `}
-        onClick={onClick}
-        aria-label={isRecording ? "Stop recording" : "Start recording"}
-        aria-pressed={isRecording}
+      onClick={onClick}
+      aria-label={isRecording ? "Stop recording" : "Start recording"}
+      aria-pressed={isRecording}
         disabled={isProcessing}
         title={isRecording ? "Stop recording" : "Start recording"}
       >
@@ -59,10 +59,10 @@ export function RecordingButton({
           <Loader2 className="w-7 h-7 text-white animate-spin" />
         ) : isRecording ? (
           <MicOff className="w-7 h-7 text-white" />
-        ) : (
+      ) : (
           <Mic className="w-7 h-7 text-white" />
-        )}
-      </button>
+      )}
+    </button>
     </div>
   );
 }

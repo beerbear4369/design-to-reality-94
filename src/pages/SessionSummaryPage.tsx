@@ -1,14 +1,44 @@
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/contexts/SessionContext";
 
 export default function SessionSummaryPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const [rating, setRating] = React.useState<number>(0);
+  const { messages, startSession } = useSession();
   
-  const handleStartNewSession = () => {
-    navigate('/');
+  // Generate a simple summary from messages
+  const summary = React.useMemo(() => {
+    // Default summary if no messages
+    if (!messages || messages.length === 0) {
+      return "You had a coaching session with Kuku Coach.";
+    }
+    
+    // Get AI messages (excluding the first greeting)
+    const aiMessages = messages.filter((msg, index) => 
+      msg.sender === "ai" && index > 0
+    );
+    
+    // If we have AI messages, use the last one as a summary
+    if (aiMessages.length > 0) {
+      return aiMessages[aiMessages.length - 1].text;
+    }
+    
+    return "Today's coaching session focused on improving communication skills and setting clear goals.";
+  }, [messages]);
+  
+  const handleStartNewSession = async () => {
+    try {
+      // Start a new session
+      const newSessionId = await startSession();
+      
+      // Navigate to the new session
+      navigate(`/session/${newSessionId}`);
+    } catch (error) {
+      console.error("Failed to start new session:", error);
+    }
   };
   
   const handleViewHistory = () => {
@@ -23,7 +53,7 @@ export default function SessionSummaryPage() {
         
         <div className="bg-[#080722] border border-white/10 rounded-[20px] p-6 w-full">
           <p className="text-white/70 text-base mb-6">
-            Today's coaching session focused on improving communication skills and setting clear goals.
+            {summary}
           </p>
           
           <div className="mt-8 mb-4 text-center">

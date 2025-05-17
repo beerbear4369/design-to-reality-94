@@ -1,25 +1,27 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/contexts/SessionContext";
 
 export default function StartSessionPage() {
   const navigate = useNavigate();
+  const { startSession } = useSession();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const handleStartSession = async () => {
     try {
-      // Placeholder for actual API call to start a session
-      // In a real implementation, this would call the backend API
-      // const response = await fetch('/api/session/start', { method: 'POST' });
-      // const data = await response.json();
+      setIsLoading(true);
       
-      // For now, we'll use a mock session ID
-      const mockSessionId = "session-" + Date.now();
+      // Use the session context to start a new session
+      const newSessionId = await startSession();
       
       // Navigate to the session page with the session ID
-      navigate(`/session/${mockSessionId}`);
+      navigate(`/session/${newSessionId}`);
     } catch (error) {
       console.error("Failed to start session:", error);
       // In a real implementation, we would display an error toast/message
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -33,8 +35,9 @@ export default function StartSessionPage() {
           onClick={handleStartSession} 
           size="lg" 
           className="mt-12 py-6 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-medium rounded-xl"
+          disabled={isLoading}
         >
-          Start Session
+          {isLoading ? "Starting..." : "Start Session"}
         </Button>
       </div>
     </div>

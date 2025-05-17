@@ -54,6 +54,12 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
 
   // Process recording data into a blob
   const processRecording = useCallback(() => {
+    // If already processed, skip
+    if (audioBlob !== null) {
+      console.log("Already processed recording, skipping duplicate processing");
+      return audioBlob;
+    }
+    
     if (audioChunksRef.current.length === 0) {
       console.log("No audio chunks to process");
       return null;
@@ -65,7 +71,7 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
     console.log(`✅ Recording finished, blob size: ${blob.size} bytes, type: ${blob.type}`);
     setAudioBlob(blob);
     return blob;
-  }, []);
+  }, [audioBlob]);
 
   // Start recording function
   const startRecording = useCallback(async () => {
@@ -186,6 +192,9 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
       processingTimeoutRef.current = null;
     }
     
+    // Create a flag to track if processing has occurred
+    let hasProcessed = false;
+    
     try {
       // First request all data accumulated so far
       mediaRecorderRef.current.requestData();
@@ -202,8 +211,9 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
             console.log("Checking if recording has been processed...");
             processingTimeoutRef.current = null;
             
-            if (audioBlob === null && audioChunksRef.current.length > 0) {
+            if (!hasProcessed && audioBlob === null && audioChunksRef.current.length > 0) {
               console.log("Manual processing of recording as fallback");
+              hasProcessed = true;
               processRecording();
             }
           }, 300);
@@ -217,12 +227,29 @@ export function useAudioRecorder(audioFormat: string = 'audio/webm'): UseAudioRe
           });
         }
       }, 100);
+      
+      // Update the onstop handler to set the hasProcessed flag
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.onstop = () => {
+          console.log("MediaRecorder onstop event fired");
+          
+          if (audioChunksRef.current.length > 0 && !hasProcessed) {
+            hasProcessed = true;
+            processRecording();
+          } else {
+            console.log("No audio data collected in onstop handler or already processed");
+          }
+          
+          setIsRecording(false);
+        };
+      }
     } catch (err) {
       console.error("Error stopping MediaRecorder:", err);
       setIsRecording(false);
       
       // Try to recover by manually processing the data
-      if (audioChunksRef.current.length > 0) {
+      if (audioChunksRef.current.length > 0 && !hasProcessed) {
+        hasProcessed = true;
         processRecording();
       }
     }
