@@ -214,6 +214,12 @@ export function useAudioRecorder({
               hasProcessed = true;
               processRecording();
             }
+            
+            // CRITICAL FIX: Cleanup after processing is complete
+            setTimeout(() => {
+              console.log("🧹 Cleaning up MediaRecorder resources for next recording");
+              cleanup();
+            }, 100);
           }, 300);
         }
         
@@ -237,6 +243,12 @@ export function useAudioRecorder({
           } else {
             console.log("No audio data collected in onstop handler or already processed");
           }
+          
+          // CRITICAL FIX: Cleanup after onstop processing is complete
+          setTimeout(() => {
+            console.log("🧹 Cleaning up MediaRecorder resources after onstop");
+            cleanup();
+          }, 100);
         };
       }
     } catch (err) {
@@ -247,8 +259,14 @@ export function useAudioRecorder({
         hasProcessed = true;
         processRecording();
       }
+      
+      // CRITICAL FIX: Cleanup even on error
+      setTimeout(() => {
+        console.log("🧹 Cleaning up MediaRecorder resources after error");
+        cleanup();
+      }, 100);
     }
-  }, [audioBlob, processRecording]);
+  }, [audioBlob, processRecording, cleanup]);
 
   // Save recording to file
   const saveRecording = useCallback((filename = 'recording') => {
