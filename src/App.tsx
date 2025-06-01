@@ -10,6 +10,7 @@ import { SessionProvider } from "./contexts/SessionContext";
 import StartSessionPage from "./pages/StartSessionPage";
 import ActiveSessionPage from "./pages/ActiveSessionPage";
 import SessionSummaryPage from "./pages/SessionSummaryPage";
+import SessionHistoryPage from "./pages/SessionHistoryPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<StartSessionPage />} />
             <Route path="/session/:sessionId" element={<ActiveSessionPage />} />
             <Route path="/summary/:sessionId" element={<SessionSummaryPage />} />
+            <Route path="/session/:sessionId/history" element={<SessionHistoryPage />} />
             
             {/* Catch-all route for 404 */}
             <Route path="*" element={<NotFound />} />

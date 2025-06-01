@@ -14,6 +14,13 @@ interface SummarySection {
   content: string[];
 }
 
+interface PersistedSummaryData {
+  finalSummary?: string;
+  lastMessage?: string;
+  autoEnded?: boolean;
+  timestamp: number;
+}
+
 export default function SessionSummaryPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -24,18 +31,73 @@ export default function SessionSummaryPage() {
   // Get navigation state for auto-ended sessions
   const locationState = location.state as LocationState | null;
   
+  // Persist summary data to localStorage when first received
+  React.useEffect(() => {
+    if (sessionId && locationState && (locationState.finalSummary || locationState.lastMessage)) {
+      const summaryData: PersistedSummaryData = {
+        finalSummary: locationState.finalSummary,
+        lastMessage: locationState.lastMessage,
+        autoEnded: locationState.autoEnded,
+        timestamp: Date.now()
+      };
+      
+      const storageKey = `kuku-coach:summary:${sessionId}`;
+      localStorage.setItem(storageKey, JSON.stringify(summaryData));
+      console.log('📝 Persisted summary data for session:', sessionId);
+    }
+  }, [sessionId, locationState]);
+
+  // Retrieve persisted summary data
+  const getPersistedSummaryData = (): PersistedSummaryData | null => {
+    if (!sessionId) return null;
+    
+    try {
+      const storageKey = `kuku-coach:summary:${sessionId}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const data: PersistedSummaryData = JSON.parse(stored);
+        // Check if data is not too old (24 hours)
+        const isRecent = Date.now() - data.timestamp < 24 * 60 * 60 * 1000;
+        if (isRecent) {
+          return data;
+        } else {
+          // Clean up old data
+          localStorage.removeItem(storageKey);
+        }
+      }
+    } catch (error) {
+      console.error('Error retrieving persisted summary data:', error);
+    }
+    
+    return null;
+  };
+
   // Parse and format the summary into sections
   const parsedSummary = React.useMemo(() => {
-    // First priority: Backend-provided final summary
+    // First priority: Backend-provided final summary from navigation state
     if (locationState?.finalSummary) {
-      console.log('📝 Using backend-provided final summary');
+      console.log('📝 Using backend-provided final summary from navigation state');
       return parseBackendSummary(locationState.finalSummary);
     }
     
-    // Second priority: Last AI message for auto-ended sessions
+    // Second priority: Last AI message from navigation state for auto-ended sessions
     if (locationState?.autoEnded && locationState?.lastMessage) {
-      console.log('📝 Using last AI message for auto-ended session');
+      console.log('📝 Using last AI message from navigation state for auto-ended session');
       return parseBackendSummary(locationState.lastMessage);
+    }
+    
+    // Third priority: Check persisted data if navigation state is missing
+    const persistedData = getPersistedSummaryData();
+    if (persistedData) {
+      console.log('📝 Using persisted summary data');
+      
+      if (persistedData.finalSummary) {
+        return parseBackendSummary(persistedData.finalSummary);
+      }
+      
+      if (persistedData.autoEnded && persistedData.lastMessage) {
+        return parseBackendSummary(persistedData.lastMessage);
+      }
     }
     
     // Fallback: Default summary message
@@ -45,7 +107,7 @@ export default function SessionSummaryPage() {
       content: "Thank you for your coaching session with Kuku Coach. We hope you found it helpful and gained valuable insights.",
       sections: []
     };
-  }, [locationState]);
+  }, [locationState, sessionId]);
 
   // Function to parse backend summary into structured sections
   function parseBackendSummary(summary: string) {
@@ -100,6 +162,12 @@ export default function SessionSummaryPage() {
   
   const handleStartNewSession = async () => {
     try {
+      // Clean up persisted summary data when starting new session
+      if (sessionId) {
+        const storageKey = `kuku-coach:summary:${sessionId}`;
+        localStorage.removeItem(storageKey);
+      }
+      
       // Start a new session
       const newSessionId = await startSession();
       
@@ -111,14 +179,27 @@ export default function SessionSummaryPage() {
   };
   
   const handleViewHistory = () => {
-    // Placeholder for viewing session history
-    console.log("View history functionality will be implemented in a later phase");
+    // Navigate to session history page with current sessionId
+    if (sessionId) {
+      navigate(`/session/${sessionId}/history`);
+    } else {
+      console.log("No session ID available for history view");
+    }
   };
   
   // Show session type indicator for debugging/development
-  const sessionTypeIndicator = locationState?.autoEnded ? 
-    "🤖 Automatically ended by AI" : 
-    "👤 Manually ended";
+  const getSessionTypeIndicator = () => {
+    if (locationState?.autoEnded) {
+      return "🤖 Automatically ended by AI";
+    }
+    
+    const persistedData = getPersistedSummaryData();
+    if (persistedData?.autoEnded) {
+      return "🤖 Automatically ended by AI (restored)";
+    }
+    
+    return "👤 Manually ended";
+  };
   
   return (
     <div className="min-h-screen bg-[#0D0D0D] flex flex-col items-center p-4">
@@ -127,7 +208,7 @@ export default function SessionSummaryPage() {
         
         {/* Development indicator - can be removed in production */}
         {process.env.NODE_ENV === 'development' && (
-          <p className="text-white/50 text-xs">{sessionTypeIndicator}</p>
+          <p className="text-white/50 text-xs">{getSessionTypeIndicator()}</p>
         )}
         
         <div className="bg-[#080722] border border-white/10 rounded-[20px] p-6 w-full">

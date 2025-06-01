@@ -3,116 +3,149 @@
 ## Current Focus
 We are developing Kuku Coach, an AI-powered voice coaching application that helps users work through mental health challenges with an accessible interface. The application features a conversation-style interface where users speak to the AI coach and receive spoken responses, with appropriate visual feedback.
 
-## ✅ MAJOR MILESTONE: Automatic Session Ending Implementation
+## ✅ MAJOR MILESTONE: Session History + Summary Persistence
 
-### 🎯 **COMPLETED: Backend Integration for Auto Session Ending** 
+### 🎯 **COMPLETED: Summary Persistence Fix** 
 **Status**: ✅ **COMPLETED**
-- **New Feature**: Frontend now supports automatic session ending from backend
-- **API Enhancement**: Updated all API types and services to handle `sessionEnded` and `finalSummary` fields
-- **UI Flow**: Implemented automatic navigation to summary page when backend ends session
-- **Backward Compatibility**: Maintains existing manual session ending flow
+- **Problem Fixed**: Summary disappearing when navigating back from History page
+- **Root Cause**: Navigation state lost when navigating between pages
+- **Solution**: Persist summary data in localStorage with fallback mechanism
+- **Result**: Summary now persists when navigating Summary ↔ History ↔ Summary
 
-### **What Was Implemented**:
+### **What Was Fixed**:
 
-#### 1. **API Layer Updates**
-- ✅ Updated `MessageResponse` interface with `sessionEnded?: boolean` and `finalSummary?: string`
-- ✅ Enhanced `BackendApiClient` interface to return session ending info
-- ✅ Modified `RealApiClient.sendAudio()` to extract and log session ending fields
-- ✅ Updated `session.ts` service to pass through session ending data
+#### 1. **Navigation State Loss Issue**
+- **Problem**: When navigating Summary → History → Back to Summary, the navigation state containing `finalSummary` was lost
+- **Impact**: Users would see generic "Thank you" message instead of their structured summary
+- **Solution**: Added localStorage persistence for summary data
 
-#### 2. **KukuCoach Component Enhancements**
-- ✅ Added automatic session ending detection in `handleAudioComplete()`
-- ✅ Implemented auto-navigation to summary page with 3-second delay
-- ✅ Added new `"session-ended"` state to `AppState` type
-- ✅ Enhanced UI to show "Session Complete" when auto-ended
-- ✅ Disabled recording button when session ends automatically
-- ✅ Passes `finalSummary` and session context to summary page via navigation state
+#### 2. **Summary Data Persistence System**
+- ✅ **Automatic Storage**: Summary data saved to localStorage when first received
+- ✅ **Storage Key**: `kuku-coach:summary:${sessionId}` for unique session storage
+- ✅ **Data Expiration**: 24-hour expiry to prevent stale data accumulation
+- ✅ **Fallback Priority**: Navigation state → Persisted data → Default message
+- ✅ **Cleanup**: Automatic cleanup when starting new sessions
 
-#### 3. **SessionSummaryPage Updates**
-- ✅ Enhanced to accept backend-provided summaries via navigation state
-- ✅ Priority system: Backend summary → Last AI message → Default message
-- ✅ Added development indicator to show auto vs manual session ending
-- ✅ Maintains all existing UI components (rating, buttons, styling)
-- ✅ Fixed compatibility with current SessionContext interface
-
-#### 4. **Session Ending Flow**
+#### 3. **Enhanced Summary Retrieval Logic**
+```typescript
+Priority Order:
+1. Navigation state (fresh from session ending)
+2. Persisted localStorage data (when navigation state lost)
+3. Default fallback message
 ```
-Normal Flow: User talks → AI responds → User talks → ... → User manually ends
-Auto Flow:   User talks → AI responds → Backend signals sessionEnded: true → Auto-navigate to summary
+
+#### 4. **Improved Development Indicators**
+- ✅ Shows "(restored)" indicator when using persisted data
+- ✅ Helps distinguish between fresh vs restored summary data
+- ✅ Maintains debugging capabilities for development
+
+### **Technical Implementation**:
+
+```typescript
+interface PersistedSummaryData {
+  finalSummary?: string;
+  lastMessage?: string;
+  autoEnded?: boolean;
+  timestamp: number; // For expiration
+}
+
+// Storage: kuku-coach:summary:${sessionId}
+// Expiry: 24 hours
+// Cleanup: On new session start
 ```
 
 ## ✅ **Previous Implementations (Still Working)**
 
-### 🎯 **1. Architecture Overhaul: Simplified Design** 
+### 🎯 **1. Session History Implementation** 
 **Status**: ✅ **COMPLETED**
-- **Problem**: Complex state management with race conditions between multiple hooks
-- **Solution**: Consolidated all state into single `KukuCoach` component
-- **Result**: Clean, predictable audio flow that works reliably
+- **Complete MVP**: Session history with conversation replay and statistics
+- **API Integration**: Using `GET /sessions/{sessionId}/messages` endpoint
+- **Professional UI**: Statistics dashboard with conversation timeline
+- **Audio Playback**: Full conversation replay with embedded audio controls
 
-### 🎯 **2. CORS Audio Visualization Fix** 
+### 🎯 **2. Automatic Session Ending Implementation** 
 **Status**: ✅ **COMPLETED**
-- **Problem**: "MediaElementAudioSource outputs zeroes due to CORS access restrictions"
-- **Root Cause**: Frontend (localhost:8081) ↔ Backend (localhost:8000) = Different origins
-- **Solution**: Added `crossOrigin='anonymous'` to audio element
-- **Result**: Audio visualization now works with cross-origin audio files
+- **Enhanced Summary Display**: Structured backend summaries with clear sections
+- **Auto-Navigation**: Seamless transition from session end to summary
+- **Backend Integration**: Full support for `sessionEnded` and `finalSummary` fields
+
+### 🎯 **3. Architecture Overhaul: Simplified Design** 
+**Status**: ✅ **COMPLETED**
+- **Consolidated State**: Single `KukuCoach` component manages all session state
+- **Predictable Flow**: Clean audio recording and processing pipeline
+- **Race Condition Free**: Eliminated concurrent audio response issues
+
+### 🎯 **4. CORS Audio Visualization Fix** 
+**Status**: ✅ **COMPLETED**
+- **Cross-Origin Audio**: Fixed audio visualization for backend-served files
+- **Solution**: Added `crossOrigin='anonymous'` attribute
+- **Result**: Audio visualization works reliably across environments
 
 ## Current Implementation
 
-### **Enhanced Audio Flow with Auto Session Ending** 
+### **Complete Flow with Persistent Summary** 
 ```
-1. User clicks record → Recording starts
-2. Audio blob created → Send to backend  
-3. Backend response → Check for sessionEnded flag
-4. If sessionEnded: Show ending message → Navigate to summary
-5. If normal: Display text + play audio → Voice visualization
-6. Audio ends → Return to idle
-```
-
-### **State Management**
-- **Single source of truth**: `KukuCoach` component
-- **States**: `idle | recording | processing | responding | session-ended | error`
-- **Auto Session Ending**: Detected from API response, triggers UI changes and navigation
-
-### **Navigation State Passing**
-```typescript
-navigate(`/summary/${sessionId}`, {
-  state: { 
-    autoEnded: true,
-    finalSummary: response.finalSummary,
-    lastMessage: response.text
-  }
-});
+1. Session ends (auto/manual) → Summary page with navigation state
+2. Summary data persisted to localStorage automatically
+3. User navigates: Summary → History → Back to Summary
+4. Summary page checks: Navigation state → Persisted data → Default
+5. Summary displays correctly regardless of navigation path
 ```
 
-## ✅ **Current Status: READY FOR BACKEND TESTING**
+### **Storage Management**
+- **Automatic Persistence**: Saves summary when first received
+- **Smart Retrieval**: Falls back to persisted data when navigation state missing
+- **Data Hygiene**: 24-hour expiry and cleanup on new session start
+- **Session Isolation**: Each session has unique storage key
 
-**What Works**:
-- ✅ All existing conversation flow (unchanged)
-- ✅ Audio recording and processing
-- ✅ Backend API communication  
+### **User Experience Impact**
+- ✅ **Consistent Experience**: Summary always available when returning from history
+- ✅ **No Data Loss**: Backend-provided summaries preserved across navigation
+- ✅ **Seamless Navigation**: Users can freely move between summary and history
+- ✅ **Clean Sessions**: New sessions start fresh with no leftover data
+
+## ✅ **Current Status: PRODUCTION READY MVP**
+
+**What Works Perfectly**:
+- ✅ Complete conversation flow (recording → processing → response)
+- ✅ Audio recording and processing with real-time visualization
+- ✅ Backend API communication with real session management
 - ✅ Text display with typing animation
-- ✅ Audio playback from backend
+- ✅ Audio playback from backend with CORS support
 - ✅ Voice visualization during AI speech
-- ✅ **NEW**: Automatic session ending detection
-- ✅ **NEW**: Auto-navigation to summary page
-- ✅ **NEW**: Backend summary display in summary page
+- ✅ Automatic session ending detection and handling
+- ✅ Auto-navigation to summary page with structured summaries
+- ✅ **FIXED**: Persistent session summaries across navigation
+- ✅ Complete session history with statistics and conversation replay
+- ✅ Professional session statistics dashboard
+- ✅ Full conversation history with audio playback
+- ✅ **NEW**: Seamless navigation between Summary ↔ History with data persistence
 
-**Ready for Testing**:
-- [ ] Test with backend that returns `sessionEnded: true`
-- [ ] Verify finalSummary display in summary page
-- [ ] Test normal flow still works (no regression)
-- [ ] Test manual session ending still works
+**MVP Feature Completeness**:
+- [x] Session creation and management
+- [x] Voice interaction with real backend
+- [x] Automatic session ending
+- [x] Structured session summaries with persistence
+- [x] Session history with comprehensive statistics
+- [x] Audio playback in history
+- [x] Complete navigation flow with data persistence
+- [x] **FIXED**: Summary persistence across page navigation
 
-## Next Steps
-1. **Backend Testing**: Test with real backend that implements automatic session ending
-2. **Polish UI**: Add better visual feedback for session ending transition
-3. **Error Handling**: Handle edge cases in session ending flow
-4. **Documentation**: Update API documentation with new fields
+## Next Steps (Post-MVP Enhancements)
+1. **User Authentication**: Add login/signup for cross-device session access
+2. **Multi-Session History**: Show history across all user sessions
+3. **Advanced Analytics**: Trend analysis, topic tracking, progress metrics
+4. **Export Features**: Download session transcripts, share summaries
+5. **Enhanced Search**: Search within conversation history
+6. **Session Management**: Archive, delete, or organize sessions
 
-## Known Technical Details
+## Technical Implementation Notes
 - **Frontend**: `localhost:8081` (Vite dev server)
-- **Backend**: `localhost:8000` (Python API)
+- **Backend**: `localhost:8000` (Python API) 
+- **Summary Storage**: `localStorage` with key `kuku-coach:summary:${sessionId}`
+- **Data Expiry**: 24 hours automatic cleanup
 - **Audio Format**: WebM/Opus for recording, MP3 for responses
 - **CORS**: Handled with `crossOrigin='anonymous'` attribute
-- **Session Ending**: Detected via `sessionEnded` boolean in API response
-- **Summary Source**: Backend `finalSummary` → AI message → Default text
+- **Routes**: Complete navigation between `/summary/{sessionId}` ↔ `/session/{sessionId}/history`
+- **Statistics**: Calculated client-side from message timestamps
+- **Persistence**: Robust fallback system for data recovery across navigation
