@@ -1,11 +1,11 @@
 /**
  * Real API Client Implementation
- * Implements the BackendApiClient interface for production use with a real backend
+ * Copy this file to: src/services/api/real/RealApiClient.ts
  */
 
-import { BackendApiClient, ApiClientConfig, SessionData, ConversationMessage } from '../types';
+import { KukuCoachApiClient, ApiClientConfig, SessionData, ConversationMessage } from '../types';
 
-export class RealApiClient implements BackendApiClient {
+export class RealApiClient implements KukuCoachApiClient {
   constructor(private config: ApiClientConfig) {}
 
   /**
@@ -27,11 +27,11 @@ export class RealApiClient implements BackendApiClient {
       }
 
       const data = await response.json();
-        
+      
       if (!data.success) {
         throw new Error(data.error || 'Failed to create session');
-        }
-        
+      }
+
       console.log('Session created successfully:', data.data.sessionId);
       return data.data;
     } catch (error) {
@@ -39,7 +39,7 @@ export class RealApiClient implements BackendApiClient {
       throw error;
     }
   }
-  
+
   /**
    * Send audio data to the backend
    */
@@ -51,7 +51,7 @@ export class RealApiClient implements BackendApiClient {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
-      const response = await fetch(`${this.config.baseUrl}/sessions/${sessionId}/messages`, {
+      const response = await fetch(`${this.config.baseUrl}/sessions/${sessionId}/audio`, {
         method: 'POST',
         body: formData,
       });
@@ -73,7 +73,7 @@ export class RealApiClient implements BackendApiClient {
       throw error;
     }
   }
-  
+
   /**
    * Get conversation messages for a session
    */
@@ -91,7 +91,7 @@ export class RealApiClient implements BackendApiClient {
       
       if (!data.success) {
         throw new Error(data.error || 'Failed to get messages');
-    }
+      }
 
       console.log('Messages retrieved successfully:', data.data.messages.length);
       return data.data.messages;
@@ -100,7 +100,7 @@ export class RealApiClient implements BackendApiClient {
       throw error;
     }
   }
-  
+
   /**
    * Health check endpoint
    */

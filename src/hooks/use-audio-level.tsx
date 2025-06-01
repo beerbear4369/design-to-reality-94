@@ -259,7 +259,7 @@ export function useAudioLevel({ isRecording = false, audioElement = null }: UseA
       cleanupAudioContext();
       
       // Create a new audio context
-      const audioContext = new AudioContext();
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       audioContextRef.current = audioContext;
       
       // Create an analyzer
@@ -271,6 +271,13 @@ export function useAudioLevel({ isRecording = false, audioElement = null }: UseA
       const source = audioContext.createMediaElementSource(audioElement);
       sourceNodeRef.current = source;
       audioElementSourceRef.current = source;
+      
+      console.log("Creating MediaElementAudioSource for audio element:", {
+        src: audioElement.src,
+        crossOrigin: audioElement.crossOrigin,
+        networkState: audioElement.networkState,
+        readyState: audioElement.readyState
+      });
       
       // Connect the source to the analyzer and to the destination
       source.connect(analyser);
@@ -288,10 +295,14 @@ export function useAudioLevel({ isRecording = false, audioElement = null }: UseA
       // Reset any errors
       setError(null);
       
-      console.log("Audio element visualization setup complete");
-    } catch (err) {
-      console.error("Error setting up audio element visualization:", err);
-      setError("Could not visualize audio element");
+      console.log("Audio element visualization setup complete - CORS enabled source created");
+    } catch (error) {
+      console.error("Failed to create audio visualization:", error);
+      if (error instanceof Error) {
+        if (error.message.includes('CORS') || error.message.includes('cross-origin')) {
+          console.error("🚫 CORS Error: Audio element needs crossOrigin='anonymous' attribute");
+        }
+      }
       
       // Fall back to zero levels
       setAudioLevel(0);

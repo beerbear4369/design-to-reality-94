@@ -42,6 +42,15 @@ export interface MessageData {
   audioUrl?: string;
 }
 
+// Backend integration types - simpler interface matching the actual backend
+export interface ConversationMessage {
+  id: string;
+  timestamp: string;
+  sender: 'user' | 'ai';
+  text: string;
+  audioUrl?: string;
+}
+
 export interface MessageResponse extends ApiResponse {
   data?: {
     messages: MessageData[];
@@ -97,7 +106,15 @@ export interface ApiClientConfig {
   onAuthError?: () => void;
 }
 
-// Main API client interface
+// Backend integration interface - simplified to match real backend
+export interface BackendApiClient {
+  createSession(): Promise<SessionData>;
+  sendAudio(sessionId: string, audioBlob: Blob): Promise<ConversationMessage[]>;
+  getMessages(sessionId: string): Promise<ConversationMessage[]>;
+  healthCheck(): Promise<boolean>;
+}
+
+// Main API client interface (existing - kept for compatibility)
 export interface KukuCoachApiClient {
   // Session Management
   createSession(): Promise<SessionResponse>;

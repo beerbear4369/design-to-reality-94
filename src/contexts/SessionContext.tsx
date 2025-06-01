@@ -1,5 +1,6 @@
 import * as React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
+import { createSession } from "@/services/api/session";
 
 // Define message types (kept for reference by consumers)
 export interface Message {
@@ -52,7 +53,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         // Only attempt to restore if we don't have a session yet
         if (sessionId) return;
         
-        // Try to get the session ID from URL or localStorage
+        // Try to get the session ID from URL
         const urlSessionId = window.location.pathname.split('/session/')[1]?.split('/')[0];
         
         if (urlSessionId) {
@@ -60,22 +61,11 @@ export function SessionProvider({ children }: SessionProviderProps) {
           setSessionId(urlSessionId);
           setStatus("idle");
           console.log(`Restored session ID from URL: ${urlSessionId}`);
-        } else {
-          // Check localStorage for active session
-          const activeSessionId = localStorage.getItem("activeSessionId");
-          if (activeSessionId) {
-            setSessionId(activeSessionId);
-            setStatus("idle");
-            console.log(`Restored active session ID: ${activeSessionId}`);
-          } else {
-            // No active session, create a new one
-            await startNewSession();
-          }
         }
+        // Note: We removed localStorage session restoration since sessions should be created fresh
       } catch (err) {
         console.error("Error restoring session:", err);
-        setError("Failed to restore session. Starting a new one.");
-        await startNewSession();
+        setError("Failed to restore session.");
       }
     };
 
@@ -83,25 +73,33 @@ export function SessionProvider({ children }: SessionProviderProps) {
     restoreSession();
   }, []); // Empty dependency array to run only once on mount
 
-  // Start a new session
+  // Start a new session - FIXED: Now calls backend API first
   const startNewSession = async (providedSessionId?: string): Promise<string> => {
-    // Use provided session ID or generate a new one with format matching the API
-    const newSessionId = providedSessionId || 
-      `session-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    
-    console.log(`SessionContext: Starting new session with ID: ${newSessionId}`);
-    
-    setSessionId(newSessionId);
-    
-    // Reset state
-    setStatus("idle");
-    setError(null);
-    
-    // Store the session ID
-    localStorage.setItem("activeSessionId", newSessionId);
-    
-    console.log("Created new session with ID:", newSessionId);
-    return newSessionId;
+    try {
+      console.log(`SessionContext: Creating session with real backend API`);
+      
+      // Call the real backend API to create a session
+      const response = await createSession(providedSessionId);
+      const realSessionId = response.sessionId;
+      
+      console.log(`SessionContext: Backend created session: ${realSessionId}`);
+      
+      // Update state with the real session ID from backend
+      setSessionId(realSessionId);
+      setStatus("idle");
+      setError(null);
+      
+      // Store the session ID (optional, for restore purposes)
+      localStorage.setItem("activeSessionId", realSessionId);
+      
+      console.log("SessionContext: Session started successfully with real ID:", realSessionId);
+      return realSessionId;
+    } catch (err) {
+      console.error("SessionContext: Failed to create session with backend:", err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create session';
+      setError(errorMessage);
+      throw err; // Re-throw so the UI can handle the error
+    }
   };
 
   // End the current session

@@ -4,187 +4,249 @@ import { RecordingButton } from "./recording-button";
 import { VoiceVisualization } from "./voice-visualization";
 import { ThinkingIndicator } from "./thinking-indicator";
 import { useAudioLevel } from "@/hooks/use-audio-level";
-import { useSession, SessionStatus } from "@/contexts/SessionContext";
-import { revokeAllAudioUrls } from "@/services/audio-generator";
-import { useConversation } from "@/hooks/useConversation";
+import { useSession } from "@/contexts/SessionContext";
+import { sendAudio } from "@/services/api/session";
+
+// Simple state for the entire conversation flow
+type AppState = "idle" | "recording" | "processing" | "responding" | "error";
 
 export function KukuCoach() {
+  // Simplified state - everything in one place
+  const [appState, setAppState] = React.useState<AppState>("idle");
   const [isRecording, setIsRecording] = React.useState(false);
   const [isAISpeaking, setIsAISpeaking] = React.useState(false);
+  const [currentMessage, setCurrentMessage] = React.useState("I'm here to help you with your goals.\nWhat would you like to discuss today?");
+  const [error, setError] = React.useState<string | null>(null);
+  
+  // Audio player ref
   const audioPlayerRef = React.useRef<HTMLAudioElement | null>(null);
   
-  // Use our conversation hook
-  const { 
-    messages, 
-    status: sessionStatus, 
-    error: sessionError,
-    setStatus: setSessionStatus,
-    setError: setSessionError,
-    isProcessingAudio,
-    sendAudioData
-  } = useConversation();
+  // Session context for session ID
+  const session = useSession();
   
-  // Microphone audio level hook - activated during recording
+  // Audio level hooks
   const { 
     audioLevel: micAudioLevel, 
-    frequencyData: micFrequencyData, 
-    error: audioLevelError 
+    frequencyData: micFrequencyData 
   } = useAudioLevel({ isRecording });
 
-  // AI audio level hook - connected to the audio player element
   const {
     audioLevel: aiAudioLevel,
     frequencyData: aiFrequencyData,
-    error: aiAudioError
   } = useAudioLevel({ audioElement: audioPlayerRef.current });
 
-  // Combined error state
-  const error = audioLevelError || sessionError || aiAudioError;
-
-  // Latest message for display
-  const latestMessage = React.useMemo(() => {
-    if (messages.length === 0) {
-      return "I'm here to help you with your goals.\nWhat would you like to discuss today?";
-    }
-    return messages[messages.length - 1].text;
-  }, [messages]);
-
-  // Track when recording state changes
+  // Handle recording state changes
   const handleRecordingStateChange = React.useCallback((recording: boolean) => {
-    console.log(`Recording state changed to: ${recording}`);
+    console.log(`🎙️ Recording state: ${recording}`);
     setIsRecording(recording);
+    if (recording) {
+      setAppState("recording");
+      setCurrentMessage("I'm listening...");
+    }
   }, []);
 
-  // Play audio when a new AI message is received
-  React.useEffect(() => {
-    // Only play audio if the session is in the responding state
-    if (sessionStatus === "responding" && messages.length > 0) {
-      const latestMessage = messages[messages.length - 1];
-      
-      // Only play audio for AI messages with an audioUrl
-      if (latestMessage.sender === "ai" && latestMessage.audioUrl) {
-        console.log(`Playing AI response audio from URL: ${latestMessage.audioUrl}`);
-        
-        // Create audio element if it doesn't exist
-        if (!audioPlayerRef.current) {
-          audioPlayerRef.current = new Audio();
-        }
-        
-        // Configure audio element
-        const audioEl = audioPlayerRef.current;
-        
-        audioEl.onended = () => {
-          console.log("Audio playback finished");
-          setIsAISpeaking(false);
-          setSessionStatus("idle");
-        };
-        
-        audioEl.onerror = (e) => {
-          console.error("Audio playback error:", e);
-          setIsAISpeaking(false);
-          setSessionError("Could not play audio response");
-          setSessionStatus("error");
-        };
-        
-        // Stop any currently playing audio
-        if (!audioEl.paused) {
-          audioEl.pause();
-          audioEl.currentTime = 0;
-        }
-        
-        // Set the source and load it
-        audioEl.src = latestMessage.audioUrl;
-        audioEl.load();
-        
-        // Add a small delay before playing to ensure everything is ready
-        setTimeout(() => {
-          // Play audio with simple retry
-          const playPromise = audioEl.play();
-          
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                console.log("Audio playback started successfully");
-                setIsAISpeaking(true);
-              })
-              .catch(err => {
-                console.error("Could not play audio:", err);
-                setIsAISpeaking(false);
-                // If audio fails, still move to idle state
-                setSessionStatus("idle");
-              });
-          } else {
-            // Older browsers might not return a promise
-            setIsAISpeaking(true);
-          }
-        }, 300); // Increased delay to give more time for loading
-      } else {
-        console.warn("AI message without audio URL:", latestMessage);
-        // If no audio URL, just move to idle
-        setTimeout(() => setSessionStatus("idle"), 2000);
-      }
-    } else if (sessionStatus !== "responding") {
-      // Ensure AI speaking is off when not in responding state
-      setIsAISpeaking(false);
-      
-      // Stop any playing audio when state changes
-      if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
-        audioPlayerRef.current.pause();
-        audioPlayerRef.current.currentTime = 0;
-      }
+  // Main function: Handle audio blob when recording is complete
+  const handleAudioComplete = React.useCallback(async (audioBlob: Blob) => {
+    if (!audioBlob) {
+      console.error("No audio blob received");
+      return;
     }
+
+    if (!session.sessionId) {
+      console.error("No session ID available");
+      setError("No active session. Please refresh the page.");
+      setAppState("error");
+      return;
+    }
+
+    console.log(`🔄 Processing audio blob: ${audioBlob.size} bytes`);
     
-    // Cleanup function to handle component unmount or state changes
-    return () => {
-      if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
-        audioPlayerRef.current.pause();
-        audioPlayerRef.current.currentTime = 0;
+    try {
+      // Step 1: Set processing state
+      setAppState("processing");
+      setCurrentMessage("Thinking...");
+      setError(null);
+
+      // Step 2: Send audio to backend
+      console.log(`📤 Sending audio to backend for session: ${session.sessionId}`);
+      const response = await sendAudio(session.sessionId, audioBlob);
+      
+      console.log(`✅ Received response:`, {
+        messageId: response.messageId,
+        text: response.text,
+        audioUrl: response.audioUrl
+      });
+
+      // Step 3: Display AI response text
+      setAppState("responding");
+      setCurrentMessage(response.text);
+
+      // Step 4: Play AI audio if available
+      if (response.audioUrl) {
+        setTimeout(() => {
+          playAIAudio(response.audioUrl!);
+        }, 500); // Small delay to let text animation start
+      } else {
+        // No audio, just finish
+        setTimeout(() => {
+          setAppState("idle");
+        }, 2000);
+      }
+
+    } catch (err) {
+      console.error("❌ Error processing audio:", err);
+      setError(err instanceof Error ? err.message : "Failed to process audio");
+      setAppState("error");
+      setCurrentMessage("Sorry, something went wrong. Please try again.");
+    }
+  }, [session.sessionId]);
+
+  // Play AI audio response
+  const playAIAudio = React.useCallback((audioUrl: string) => {
+    console.log(`🔊 Playing AI audio: ${audioUrl}`);
+    
+    // Create audio element if needed
+    if (!audioPlayerRef.current) {
+      audioPlayerRef.current = new Audio();
+      // Set audio properties for better compatibility
+      audioPlayerRef.current.preload = 'auto';
+      audioPlayerRef.current.volume = 0.8; // Set volume to 80%
+      // CORS FIX: Allow cross-origin access for audio visualization
+      audioPlayerRef.current.crossOrigin = 'anonymous';
+      console.log("🔊 Audio element created with CORS support");
+    }
+
+    const audioEl = audioPlayerRef.current;
+
+    // Set up event handlers
+    audioEl.onloadstart = () => {
+      console.log("🔊 Audio loading started");
+    };
+
+    audioEl.oncanplay = () => {
+      console.log("🔊 Audio can start playing");
+    };
+
+    audioEl.onended = () => {
+      console.log("🔊 Audio playback finished");
+      setIsAISpeaking(false);
+      setAppState("idle");
+    };
+
+    audioEl.onerror = (e) => {
+      console.error("🔊 Audio playback error:", e);
+      console.error("🔊 Audio error details:", {
+        src: audioEl.src,
+        error: audioEl.error,
+        networkState: audioEl.networkState,
+        readyState: audioEl.readyState
+      });
+      setIsAISpeaking(false);
+      setAppState("idle");
+      setError("Could not play audio response");
+    };
+
+    // Stop any currently playing audio
+    if (!audioEl.paused) {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+    }
+
+    // Set the source and load it
+    audioEl.src = audioUrl;
+    console.log(`🔊 Loading audio from: ${audioUrl}`);
+    
+    // Force load the audio
+    audioEl.load();
+    
+    // Wait for the audio to be ready, then play
+    const attemptPlay = () => {
+      console.log(`🔊 Attempting to play audio, readyState: ${audioEl.readyState}`);
+      
+      const playPromise = audioEl.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log("🔊 ✅ Audio playback started successfully");
+            setIsAISpeaking(true);
+          })
+          .catch(err => {
+            console.error("🔊 ❌ Failed to play audio:", err);
+            console.error("🔊 Play error details:", {
+              name: err.name,
+              message: err.message,
+              audioSrc: audioEl.src,
+              volume: audioEl.volume,
+              muted: audioEl.muted
+            });
+            
+            // Try to recover from autoplay policy issues
+            if (err.name === 'NotAllowedError') {
+              console.log("🔊 Autoplay blocked - will try to play on next user interaction");
+              setError("Click anywhere to enable audio playback");
+            }
+            
+            setAppState("idle");
+          });
+      } else {
+        // Older browsers might not return a promise
+        console.log("🔊 Audio playback started (legacy browser)");
+        setIsAISpeaking(true);
       }
     };
-  }, [messages, sessionStatus, setSessionStatus, setSessionError]);
 
-  // Determine message display text based on state
-  const getMessageText = () => {
-    if (error) {
-      return error;
+    // Try to play immediately, or wait for canplay event
+    if (audioEl.readyState >= 3) { // HAVE_FUTURE_DATA
+      attemptPlay();
+    } else {
+      console.log("🔊 Waiting for audio to load...");
+      audioEl.oncanplay = () => {
+        console.log("🔊 Audio ready, attempting play");
+        attemptPlay();
+      };
     }
-    
-    switch (sessionStatus) {
-      case "recording":
-        return "I'm listening...";
-      case "idle":
-      case "responding":
-        return latestMessage;
-      case "processing":
-        return "Thinking...";
-      case "error":
-        return "Sorry, something went wrong. Please try again.";
-      default:
-        return latestMessage;
+  }, []);
+
+  // Handle click to enable audio (needed for browser autoplay policies)
+  const handleEnableAudio = React.useCallback(() => {
+    if (audioPlayerRef.current && audioPlayerRef.current.paused && isAISpeaking) {
+      console.log("🔊 User interaction - attempting to play paused audio");
+      audioPlayerRef.current.play()
+        .then(() => {
+          console.log("🔊 Audio resumed after user interaction");
+          setError(null);
+        })
+        .catch(err => {
+          console.error("🔊 Still failed to play after user interaction:", err);
+        });
     }
+  }, [isAISpeaking]);
+
+  // Determine display message based on state
+  const getDisplayMessage = () => {
+    if (error) return error;
+    return currentMessage;
   };
 
-  // Determine if we should show typing animation
-  const shouldShowTypingAnimation = sessionStatus === "responding";
+  // Determine if typing animation should show
+  const shouldShowTyping = appState === "responding";
 
-  // Cleanup logic to revoke audio URLs when the component unmounts
+  // Cleanup on unmount
   React.useEffect(() => {
     return () => {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
         audioPlayerRef.current = null;
       }
-      revokeAllAudioUrls();
     };
   }, []);
 
-  // Debug current state
-  React.useEffect(() => {
-    // console.log(`Audio visualization: recording=${isRecording}, speaking=${isAISpeaking}, audioLevel=${isRecording ? micAudioLevel : aiAudioLevel}`);
-  }, [sessionStatus, isRecording, isAISpeaking, micAudioLevel, aiAudioLevel]);
-
   return (
-    <main className="bg-black flex max-w-[400px] w-full flex-col overflow-hidden items-center mx-auto py-[40px] min-h-screen">
+    <main 
+      className="bg-black flex max-w-[400px] w-full flex-col overflow-hidden items-center mx-auto py-[40px] min-h-screen"
+      onClick={handleEnableAudio}
+    >
       <header className="text-white text-[28px] font-semibold tracking-wide">
         Kuku Coach
       </header>
@@ -206,19 +268,23 @@ export function KukuCoach() {
         </div>
         
         {/* Thinking indicator */}
-        <ThinkingIndicator isThinking={sessionStatus === "processing"} />
+        <ThinkingIndicator isThinking={appState === "processing"} />
         
         {/* Message container */}
         <div className="min-h-[100px] flex items-center justify-center w-full px-6 mt-[20px]">
           <AIMessage 
-            message={getMessageText()}
-            isTyping={shouldShowTypingAnimation}
+            message={getDisplayMessage()}
+            isTyping={shouldShowTyping}
           />
         </div>
         
         {/* Recording button */}
         <div className="mb-[50px] mt-[20px]">
-          <RecordingButton onRecordingChange={handleRecordingStateChange} />
+          <RecordingButton 
+            onRecordingChange={handleRecordingStateChange}
+            onAudioComplete={handleAudioComplete}
+            disabled={appState === "processing"}
+          />
         </div>
       </section>
     </main>

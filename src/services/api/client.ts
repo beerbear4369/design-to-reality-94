@@ -1,53 +1,47 @@
 /**
  * API Client Factory
  * Creates and configures API clients for the application
+ * SIMPLIFIED: Only supports real backend API
  */
 
-import { KukuCoachApiClient, ApiClientConfig, ApiClientFactory } from './types';
-import { MockApiClient } from './mock/MockApiClient';
+import { ApiClientConfig } from './types';
+import { RealApiClient } from './real/RealApiClient';
 
 /**
- * Default API client configuration
+ * Default API client configuration for real backend
  */
 const DEFAULT_CONFIG: ApiClientConfig = {
-  baseUrl: '/api',
-  useMock: true, // Default to mock in development
-  timeout: 30000 // 30 seconds
+  baseUrl: 'http://localhost:8000/api',
+  useMock: false,
+  timeout: 30000
 };
 
 /**
- * Creates an API client with the specified configuration
+ * Creates a real backend API client
+ * SIMPLIFIED: No more mock fallback or complex adapters
  */
-export const createApiClient: ApiClientFactory = (config) => {
+export const createApiClient = (config?: Partial<ApiClientConfig>): RealApiClient => {
   // Merge with default config
   const mergedConfig: ApiClientConfig = {
     ...DEFAULT_CONFIG,
     ...config,
   };
 
-  console.log(`Creating API client with config:`, {
+  console.log(`Creating real backend API client:`, {
     baseUrl: mergedConfig.baseUrl,
-    useMock: mergedConfig.useMock,
     timeout: mergedConfig.timeout,
   });
 
-  // For now, only return the mock client as we haven't implemented the real client yet
-  return new MockApiClient(mergedConfig);
-
-  // When real implementation is ready:
-  // if (mergedConfig.useMock) {
-  //   return new MockApiClient(mergedConfig);
-  // }
-  // return new RealApiClient(mergedConfig);
+  return new RealApiClient(mergedConfig);
 };
 
 // Singleton instance with default config
-let apiClientInstance: KukuCoachApiClient | null = null;
+let apiClientInstance: RealApiClient | null = null;
 
 /**
  * Gets the singleton API client instance
  */
-export const getApiClient = (): KukuCoachApiClient => {
+export const getApiClient = (): RealApiClient => {
   if (!apiClientInstance) {
     apiClientInstance = createApiClient(DEFAULT_CONFIG);
   }

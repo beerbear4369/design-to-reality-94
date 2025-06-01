@@ -1,52 +1,25 @@
 import * as React from "react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
-import { useAudioLevel } from "@/hooks/use-audio-level";
-import { useConversation } from "@/hooks/useConversation";
 
 interface RecordingButtonProps {
   onRecordingChange?: (isRecording: boolean) => void;
+  onAudioComplete?: (audioBlob: Blob) => Promise<void>;
+  disabled?: boolean;
 }
 
-export function RecordingButton({ onRecordingChange }: RecordingButtonProps) {
+export function RecordingButton({ 
+  onRecordingChange, 
+  onAudioComplete,
+  disabled = false 
+}: RecordingButtonProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [internalError, setInternalError] = useState<string | null>(null);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
-  // Use a ref to track the latest audio blob
-  const audioBlobRef = useRef<Blob | null>(null);
-  const isProcessingRef = useRef<boolean>(false);
-  
-  // Add a debug log function
-  const addDebugLog = useCallback((message: string) => {
-    console.log(message);
-    setDebugLogs(prev => [...prev.slice(-5), message]);
-  }, []);
-  
-  // Use our hooks
-  const { audioLevel, frequencyData } = useAudioLevel({ isRecording });
+  // Use the audio recorder hook
   const { audioBlob, error: recordingError, resetAudioBlob } = useAudioRecorder({ isRecording });
-  const { sendAudioData, status, error: sessionError, setError, sessionId } = useConversation();
-  
-  // Update audio blob ref when audioBlob changes
-  useEffect(() => {
-    audioBlobRef.current = audioBlob;
-    if (audioBlob) {
-      addDebugLog(`Audio blob available: ${audioBlob.size} bytes`);
-    }
-  }, [audioBlob, addDebugLog]);
-  
-  // Combine error states
-  const error = internalError || recordingError?.message || sessionError;
-  
-  // Debug session ID changes
-  useEffect(() => {
-    if (sessionId) {
-      addDebugLog(`Session ID updated: ${sessionId}`);
-    }
-  }, [sessionId, addDebugLog]);
   
   // Track recording duration
   useEffect(() => {
@@ -67,113 +40,47 @@ export function RecordingButton({ onRecordingChange }: RecordingButtonProps) {
       if (interval) clearInterval(interval);
     };
   }, [isRecording]);
-  
-  // Handle recording errors
+
+  // When audioBlob is available and we've stopped recording, send it
   useEffect(() => {
-    if (recordingError) {
-      addDebugLog(`Recording error: ${recordingError.message}`);
-      setInternalError(recordingError.message);
-      setIsRecording(false);
-      // Notify parent
-      if (onRecordingChange) {
-        onRecordingChange(false);
-      }
-    }
-  }, [recordingError, onRecordingChange, addDebugLog]);
-  
-  // Clear error when status changes
-  useEffect(() => {
-    if (status === 'idle' && internalError) {
-      setInternalError(null);
-    }
-    // Track status changes
-    addDebugLog(`Session status: ${status}`);
-  }, [status, internalError, addDebugLog]);
-  
-  // Notify parent component when recording state changes
-  useEffect(() => {
-    if (onRecordingChange) {
-      onRecordingChange(isRecording);
-    }
-  }, [isRecording, onRecordingChange]);
-  
-  // Process and send the audio data - only triggered after recording is stopped
-  const processAudioData = useCallback(async () => {
-    // Prevent multiple simultaneous processing
-    if (isProcessingRef.current) {
-      addDebugLog("Already processing audio, skipping");
-      return;
-    }
-    
-    // Use the ref value to get the latest audio blob
-    const currentBlob = audioBlobRef.current;
-    
-    if (!currentBlob) {
-      addDebugLog("No audio blob available to process");
-      return;
-    }
-    
-    isProcessingRef.current = true;
-    addDebugLog(`Processing audio blob: ${currentBlob.size} bytes`);
-    
-    try {
-      // Send the audio data to the backend via useConversation
-      await sendAudioData(currentBlob);
-      addDebugLog("Successfully sent audio data");
+    if (audioBlob && !isRecording && onAudioComplete) {
+      console.log(`🎙️ Audio recording complete: ${audioBlob.size} bytes`);
       
-      // Clear the audio blob to prevent reprocessing in case of accidental double-click
-      resetAudioBlob();
-      audioBlobRef.current = null;
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : 'Unknown error';
-      addDebugLog(`Error sending audio: ${errMsg}`);
-      if (err instanceof Error) {
-        setInternalError(err.message);
-      } else {
-        setInternalError('Unknown error processing audio');
-      }
-    } finally {
-      isProcessingRef.current = false;
+      // Send the audio blob to parent component
+      onAudioComplete(audioBlob)
+        .then(() => {
+          console.log("✅ Audio processing started successfully");
+          resetAudioBlob(); // Clear the blob after successful send
+        })
+        .catch((err) => {
+          console.error("❌ Failed to process audio:", err);
+          setError("Failed to process audio");
+        });
     }
-  }, [sendAudioData, resetAudioBlob, addDebugLog]);
-  
-  // Handle toggle recording with clear separation between recording and processing
-  const handleToggleRecording = useCallback(async () => {
-    // If already recording, stop recording and then process the audio
+  }, [audioBlob, isRecording, onAudioComplete, resetAudioBlob]);
+
+  // Handle toggle recording
+  const handleToggleRecording = useCallback(() => {
+    if (disabled) {
+      console.log("🎙️ Recording disabled, ignoring click");
+      return;
+    }
+
     if (isRecording) {
-      addDebugLog("Stopping recording");
-      
-      // First stop the recording
+      console.log("🎙️ Stopping recording");
       setIsRecording(false);
-      
-      // Add a small delay to ensure the audio blob is fully created before processing
-      // This ensures a sequential flow: 1) Stop recording completely, 2) Then process audio
-      setTimeout(() => {
-        addDebugLog("Recording stopped, processing audio data");
-        processAudioData();
-      }, 800);
-    } 
-    // If not recording and not in a processing/responding state, start recording
-    else {
-      // Clear any previous errors
-      setInternalError(null);
-      
-      // Don't allow starting a new recording during processing or response
-      if (status === 'processing' || status === 'responding') {
-        addDebugLog(`Cannot start recording during ${status} state`);
-        setInternalError("Please wait for the current response to complete");
-        return;
-      }
-      
-      addDebugLog("Starting recording");
-      // Start recording
+      onRecordingChange?.(false);
+    } else {
+      console.log("🎙️ Starting recording");
+      setError(null);
       setIsRecording(true);
+      onRecordingChange?.(true);
     }
-  }, [isRecording, status, processAudioData, addDebugLog]);
-  
-  // Determine if the button should be disabled
-  const isProcessing = status === 'processing' || status === 'responding';
-  
+  }, [isRecording, disabled, onRecordingChange]);
+
+  // Combined error state
+  const displayError = error || recordingError?.message;
+
   // Format recording duration (MM:SS)
   const formattedDuration = React.useMemo(() => {
     if (!recordingDuration) return "";
@@ -183,31 +90,19 @@ export function RecordingButton({ onRecordingChange }: RecordingButtonProps) {
   }, [recordingDuration]);
 
   return (
-    <div className="flex flex-col items-center">
-      {/* Debug logs display */}
-      <div className="text-xs bg-black/80 text-green-400 p-2 rounded mb-2 w-[300px] max-h-[100px] overflow-y-auto font-mono">
-        {debugLogs.length > 0 ? (
-          debugLogs.map((log, i) => <div key={i}>{log}</div>)
-        ) : (
-          <div>No debug logs yet</div>
-        )}
-      </div>
-      
-      {/* Recording duration display */}
-      {isRecording && recordingDuration > 0 && (
-        <div className="text-white/90 text-sm mb-2 font-mono">{formattedDuration}</div>
-      )}
-      
-      {/* Status indicator */}
-      {isProcessing && !isRecording && !error && (
-        <div className="text-blue-400 text-xs mb-2 max-w-[200px] text-center">
-          {status === 'processing' ? 'Processing...' : 'Listening to response...'}
+    <div className="flex flex-col items-center gap-4">
+      {/* Error message */}
+      {displayError && (
+        <div className="text-red-400 text-sm text-center max-w-[280px]">
+          {displayError}
         </div>
       )}
       
-      {/* Error message */}
-      {error && (
-        <div className="text-red-400 text-xs mb-2 max-w-[200px] text-center">{error}</div>
+      {/* Recording duration */}
+      {isRecording && formattedDuration && (
+        <div className="text-white/70 text-sm font-mono">
+          {formattedDuration}
+        </div>
       )}
       
       {/* Recording button */}
@@ -219,19 +114,19 @@ export function RecordingButton({ onRecordingChange }: RecordingButtonProps) {
           disabled:opacity-50 disabled:cursor-not-allowed
           ${isRecording 
             ? "bg-[#e91e63] shadow-lg shadow-[#e91e63]/30 hover:bg-[#d81b60]" 
-            : isProcessing 
-              ? "bg-[#9c27b0] shadow-lg shadow-[#9c27b0]/30 hover:bg-[#8e24aa]"
+            : disabled 
+              ? "bg-[#9c27b0] shadow-lg shadow-[#9c27b0]/30"
               : "bg-[#3f51b5] hover:bg-[#3949ab] shadow-lg shadow-[#3f51b5]/20"
           }
-          ${error ? "border-2 border-red-400" : ""}
+          ${displayError ? "border-2 border-red-400" : ""}
         `}
         onClick={handleToggleRecording}
         aria-label={isRecording ? "Stop recording" : "Start recording"}
         aria-pressed={isRecording}
-        disabled={isProcessing}
-        title={isRecording ? "Stop recording" : isProcessing ? "Processing" : "Start recording"}
+        disabled={disabled}
+        title={isRecording ? "Stop recording" : disabled ? "Processing" : "Start recording"}
       >
-        {isProcessing && !isRecording ? (
+        {disabled && !isRecording ? (
           <Loader2 className="w-7 h-7 text-white animate-spin" />
         ) : isRecording ? (
           <MicOff className="w-7 h-7 text-white" />
