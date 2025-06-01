@@ -38,6 +38,8 @@ export interface SendAudioResponse {
   messageId: string;
   text: string;
   audioUrl: string;
+  sessionEnded?: boolean;
+  finalSummary?: string;
 }
 
 export interface HistoryResponse {
@@ -117,24 +119,34 @@ export async function sendAudio(sessionId: string, audioBlob: Blob): Promise<Sen
   
   try {
     // Send audio directly to the backend
-    const messages = await apiClient.sendAudio(sessionId, audioBlob);
+    const response = await apiClient.sendAudio(sessionId, audioBlob);
     
-    if (messages.length === 0) {
+    if (response.messages.length === 0) {
       throw new Error('No messages received from backend');
     }
     
     // Get the latest AI message from the response
-    const aiMessage = messages.find(msg => msg.sender === 'ai');
+    const aiMessage = response.messages.find(msg => msg.sender === 'ai');
     if (!aiMessage) {
       throw new Error('No AI response found in backend response');
     }
     
     console.log('API: AI response received:', aiMessage.id);
     
+    // Check for automatic session ending
+    if (response.sessionEnded) {
+      console.log('🏁 API: Session automatically ended by backend');
+      if (response.finalSummary) {
+        console.log('📝 API: Final summary received:', response.finalSummary.substring(0, 100) + '...');
+      }
+    }
+    
     return {
       messageId: aiMessage.id,
       text: aiMessage.text,
-      audioUrl: makeAbsoluteUrl(aiMessage.audioUrl) || ''
+      audioUrl: makeAbsoluteUrl(aiMessage.audioUrl) || '',
+      sessionEnded: response.sessionEnded,
+      finalSummary: response.finalSummary
     };
   } catch (error) {
     console.error('API: Audio processing failed:', error);

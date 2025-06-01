@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import { AIMessage } from "./ai-message";
 import { RecordingButton } from "./recording-button";
 import { VoiceVisualization } from "./voice-visualization";
@@ -8,9 +9,12 @@ import { useSession } from "@/contexts/SessionContext";
 import { sendAudio } from "@/services/api/session";
 
 // Simple state for the entire conversation flow
-type AppState = "idle" | "recording" | "processing" | "responding" | "error";
+type AppState = "idle" | "recording" | "processing" | "responding" | "session-ended" | "error";
 
 export function KukuCoach() {
+  // Navigation hook for automatic session ending
+  const navigate = useNavigate();
+  
   // Simplified state - everything in one place
   const [appState, setAppState] = React.useState<AppState>("idle");
   const [isRecording, setIsRecording] = React.useState(false);
@@ -74,14 +78,37 @@ export function KukuCoach() {
       console.log(`✅ Received response:`, {
         messageId: response.messageId,
         text: response.text,
-        audioUrl: response.audioUrl
+        audioUrl: response.audioUrl,
+        sessionEnded: response.sessionEnded,
+        hasFinalSummary: !!response.finalSummary
       });
 
-      // Step 3: Display AI response text
+      // Step 3: Check for automatic session ending
+      if (response.sessionEnded) {
+        console.log('🏁 Session automatically ended by backend');
+        setAppState("session-ended");
+        setCurrentMessage(response.finalSummary || "Thank you for your session. Here's your summary.");
+        
+        // Navigate to summary page after a brief delay to show the ending message
+        setTimeout(() => {
+          console.log('🔄 Navigating to summary page...');
+          navigate(`/summary/${session.sessionId}`, {
+            state: { 
+              autoEnded: true,
+              finalSummary: response.finalSummary,
+              lastMessage: response.text
+            }
+          });
+        }, 3000); // 3 second delay to let user see the ending message
+        
+        return; // Don't proceed with normal audio playback flow
+      }
+
+      // Step 4: Normal flow - Display AI response text
       setAppState("responding");
       setCurrentMessage(response.text);
 
-      // Step 4: Play AI audio if available
+      // Step 5: Play AI audio if available
       if (response.audioUrl) {
         setTimeout(() => {
           playAIAudio(response.audioUrl!);
@@ -99,7 +126,7 @@ export function KukuCoach() {
       setAppState("error");
       setCurrentMessage("Sorry, something went wrong. Please try again.");
     }
-  }, [session.sessionId]);
+  }, [session.sessionId, navigate]);
 
   // Play AI audio response
   const playAIAudio = React.useCallback((audioUrl: string) => {
@@ -230,7 +257,10 @@ export function KukuCoach() {
   };
 
   // Determine if typing animation should show
-  const shouldShowTyping = appState === "responding";
+  const shouldShowTyping = appState === "responding" || appState === "session-ended";
+
+  // Determine if recording should be disabled
+  const isRecordingDisabled = appState === "processing" || appState === "session-ended";
 
   // Cleanup on unmount
   React.useEffect(() => {
@@ -253,7 +283,7 @@ export function KukuCoach() {
       
       <section className="flex flex-col items-center justify-between w-full flex-1">
         <h2 className="text-white text-lg font-normal mt-[32px] opacity-90">
-          Speak to your coach
+          {appState === "session-ended" ? "Session Complete" : "Speak to your coach"}
         </h2>
         
         {/* Voice visualization */}
@@ -278,12 +308,12 @@ export function KukuCoach() {
           />
         </div>
         
-        {/* Recording button */}
+        {/* Recording button - disabled when session ended */}
         <div className="mb-[50px] mt-[20px]">
           <RecordingButton 
             onRecordingChange={handleRecordingStateChange}
             onAudioComplete={handleAudioComplete}
-            disabled={appState === "processing"}
+            disabled={isRecordingDisabled}
           />
         </div>
       </section>

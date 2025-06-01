@@ -54,6 +54,8 @@ export interface ConversationMessage {
 export interface MessageResponse extends ApiResponse {
   data?: {
     messages: MessageData[];
+    sessionEnded?: boolean;
+    finalSummary?: string;
   };
 }
 
@@ -109,7 +111,11 @@ export interface ApiClientConfig {
 // Backend integration interface - simplified to match real backend
 export interface BackendApiClient {
   createSession(): Promise<SessionData>;
-  sendAudio(sessionId: string, audioBlob: Blob): Promise<ConversationMessage[]>;
+  sendAudio(sessionId: string, audioBlob: Blob): Promise<{
+    messages: ConversationMessage[];
+    sessionEnded?: boolean;
+    finalSummary?: string;
+  }>;
   getMessages(sessionId: string): Promise<ConversationMessage[]>;
   healthCheck(): Promise<boolean>;
 }

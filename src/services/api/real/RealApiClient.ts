@@ -43,7 +43,11 @@ export class RealApiClient implements BackendApiClient {
   /**
    * Send audio data to the backend
    */
-  async sendAudio(sessionId: string, audioBlob: Blob): Promise<ConversationMessage[]> {
+  async sendAudio(sessionId: string, audioBlob: Blob): Promise<{
+    messages: ConversationMessage[];
+    sessionEnded?: boolean;
+    finalSummary?: string;
+  }> {
     try {
       console.log(`Sending audio for session: ${sessionId}`);
       console.log(`Audio blob size: ${audioBlob.size} bytes`);
@@ -67,7 +71,20 @@ export class RealApiClient implements BackendApiClient {
       }
 
       console.log('Audio processed successfully, received messages:', data.data.messages.length);
-      return data.data.messages;
+      
+      // Check for automatic session ending fields
+      if (data.data.sessionEnded) {
+        console.log('🏁 Session automatically ended by backend');
+        if (data.data.finalSummary) {
+          console.log('📝 Final summary provided:', data.data.finalSummary);
+        }
+      }
+      
+      return {
+        messages: data.data.messages,
+        sessionEnded: data.data.sessionEnded,
+        finalSummary: data.data.finalSummary
+      };
     } catch (error) {
       console.error('Error sending audio:', error);
       throw error;
