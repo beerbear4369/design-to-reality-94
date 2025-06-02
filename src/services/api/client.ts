@@ -8,10 +8,24 @@ import { ApiClientConfig } from './types';
 import { RealApiClient } from './real/RealApiClient';
 
 /**
+ * Get the backend URL based on environment
+ */
+const getBackendUrl = (): string => {
+  // Check for environment variable first
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // Default to localhost for development
+  return 'http://localhost:8000/api';
+};
+
+/**
  * Default API client configuration for real backend
  */
 const DEFAULT_CONFIG: ApiClientConfig = {
-  baseUrl: 'http://localhost:8000/api',
+  baseUrl: getBackendUrl(),
   useMock: false,
   timeout: 30000
 };

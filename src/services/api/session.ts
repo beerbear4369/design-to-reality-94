@@ -7,15 +7,37 @@
 import { RealApiClient } from './real/RealApiClient';
 import { ApiClientConfig, ConversationMessage } from './types';
 
+/**
+ * Get the backend URL based on environment
+ */
+const getBackendUrl = (): string => {
+  // Check for environment variable first
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  // Default to localhost for development
+  return 'http://localhost:8000/api';
+};
+
+/**
+ * Get the backend base URL (without /api) for audio files
+ */
+const getBackendBaseUrl = (): string => {
+  const apiUrl = getBackendUrl();
+  return apiUrl.replace('/api', '');
+};
+
 // Direct configuration for the real backend
 const API_CONFIG: ApiClientConfig = {
-  baseUrl: 'http://localhost:8000/api',
+  baseUrl: getBackendUrl(),
   useMock: false,
   timeout: 30000
 };
 
 // Backend base URL for audio files (without /api)
-const BACKEND_BASE_URL = 'http://localhost:8000';
+const BACKEND_BASE_URL = getBackendBaseUrl();
 
 // Create the API client instance
 const apiClient = new RealApiClient(API_CONFIG);
