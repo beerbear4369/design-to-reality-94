@@ -1,73 +1,92 @@
-# Welcome to your Lovable project
+# Kuku Coach - AI Voice Coaching Assistant
 
-## Project info
+An AI-powered voice coaching application that helps users work through mental health challenges with an accessible, conversation-style interface.
 
-**URL**: https://lovable.dev/projects/da3459bb-d878-41ae-bf74-e1bfb080545e
+## 🎯 Features
 
-## How can I edit this code?
+- **Voice Interaction**: Record voice input and receive AI-generated spoken responses
+- **Real-time Visualization**: Multi-layered voice waveform visualization during conversations
+- **Session Management**: Track conversation history and session progress
+- **Mobile Optimized**: Responsive design with touch-friendly interface
+- **China-Friendly**: Optimized for global deployment including China
 
-There are several ways of editing your application.
+## 🚀 Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI Components**: Shadcn UI (Radix UI primitives)
+- **Styling**: Tailwind CSS
+- **Audio Processing**: Web Audio API
+- **State Management**: React Context API + Custom Hooks
+- **Routing**: React Router v6
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/da3459bb-d878-41ae-bf74-e1bfb080545e) and start prompting.
+## 🏗️ Development
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
+- Node.js 18 or higher
+- npm or yarn
 
-**Use your preferred IDE**
+### Installation
+```bash
+# Clone the repository
+git clone [your-repo-url]
+cd design-to-reality-94
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# Install dependencies
+npm install
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Environment Variables
+Create a `.env.local` file in the root directory:
+```bash
+VITE_API_BASE_URL=https://your-backend-api.com/api
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Build for Production
+```bash
+npm run build
+```
 
-**Use GitHub Codespaces**
+## 🌐 Deployment
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Netlify Deployment
+1. Push your code to GitHub
+2. Connect your repository to Netlify
+3. Set environment variable: `VITE_API_BASE_URL`
+4. Deploy automatically with the included `netlify.toml` configuration
 
-## What technologies are used for this project?
+### Environment Configuration
+- **Development**: Uses `http://localhost:8000/api` by default
+- **Production**: Uses `VITE_API_BASE_URL` environment variable
 
-This project is built with:
+## 📱 Mobile Support
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The application is fully optimized for mobile devices with:
+- Touch-friendly interface
+- Responsive design
+- Mobile-optimized audio controls
+- China-compatible resource loading
 
-## How can I deploy this project?
+## 🎨 Key Components
 
-Simply open [Lovable](https://lovable.dev/projects/da3459bb-d878-41ae-bf74-e1bfb080545e) and click on Share -> Publish.
+- **KukuCoach**: Main conversation interface
+- **VoiceVisualization**: Real-time audio visualization
+- **SessionHistory**: Conversation replay and statistics
+- **AudioRecorder**: Voice recording functionality
 
-## Can I connect a custom domain to my Lovable project?
+## 🔧 API Integration
 
-Yes, you can!
+The app communicates with a backend API for:
+- Session creation and management
+- Audio processing and AI responses
+- Conversation history retrieval
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📄 License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project is proprietary software for Kuku Coach.
+
+## 🤝 Contributing
+
+This is a private project. For development questions, please contact the development team.
