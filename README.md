@@ -1,92 +1,105 @@
 # Kuku Coach - AI Voice Coaching Assistant
 
-An AI-powered voice coaching application that helps users work through mental health challenges with an accessible, conversation-style interface.
+## Overview
+Kuku Coach is an AI-powered voice coaching assistant that provides personal development and mental health support through natural voice interactions. The application features real-time voice processing, dynamic audio visualizations, and seamless conversation flow.
 
-## 🎯 Features
-
-- **Voice Interaction**: Record voice input and receive AI-generated spoken responses
-- **Real-time Visualization**: Multi-layered voice waveform visualization during conversations
-- **Session Management**: Track conversation history and session progress
-- **Mobile Optimized**: Responsive design with touch-friendly interface
-- **China-Friendly**: Optimized for global deployment including China
-
-## 🚀 Tech Stack
-
-- **Frontend**: React 18 + TypeScript + Vite
-- **UI Components**: Shadcn UI (Radix UI primitives)
-- **Styling**: Tailwind CSS
-- **Audio Processing**: Web Audio API
-- **State Management**: React Context API + Custom Hooks
-- **Routing**: React Router v6
-
-## 🏗️ Development
+## Development Setup
 
 ### Prerequisites
-- Node.js 18 or higher
-- npm or yarn
+- Node.js (v18 or higher)
+- npm or bun package manager
 
 ### Installation
-```bash
-# Clone the repository
-git clone [your-repo-url]
-cd design-to-reality-94
 
-# Install dependencies
-npm install
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd design-to-reality-94
+   ```
 
-# Start development server
-npm run dev
-```
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   bun install
+   ```
 
-### Environment Variables
-Create a `.env.local` file in the root directory:
-```bash
-VITE_API_BASE_URL=https://your-backend-api.com/api
-```
+3. **Environment Configuration**
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_API_BASE_URL=http://localhost:8000
+   ```
 
-### Build for Production
-```bash
-npm run build
-```
+4. **Start development server**
+   ```bash
+   npm run dev
+   # or
+   bun dev
+   ```
 
-## 🌐 Deployment
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+
+## Features
+
+- **Voice Interaction**: Real-time voice recording and AI response playback
+- **Audio Visualization**: Dynamic multi-layered waveform visualization
+- **Session Management**: Persistent conversation history and session summaries
+- **Responsive Design**: Mobile-optimized interface with touch-friendly controls
+- **Real-time Feedback**: Visual indicators for recording, processing, and response states
+
+## Technical Stack
+
+- **Frontend**: React 18 + TypeScript, Vite
+- **Styling**: Tailwind CSS, Shadcn/UI components
+- **State Management**: React Context API, TanStack Query
+- **Audio Processing**: Web Audio API
+- **Routing**: React Router v6
+
+## Production Deployment
+
+This application can be deployed to various hosting platforms:
 
 ### Netlify Deployment
-1. Push your code to GitHub
-2. Connect your repository to Netlify
-3. Set environment variable: `VITE_API_BASE_URL`
-4. Deploy automatically with the included `netlify.toml` configuration
+1. Build the project: `npm run build`
+2. Deploy the `dist` folder to Netlify
+3. Configure environment variables in Netlify dashboard
+4. Set up custom domain if needed
 
-### Environment Configuration
-- **Development**: Uses `http://localhost:8000/api` by default
-- **Production**: Uses `VITE_API_BASE_URL` environment variable
+### Vercel Deployment
+1. Connect repository to Vercel
+2. Configure build settings:
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+3. Add environment variables
+4. Deploy
 
-## 📱 Mobile Support
+## API Integration
 
-The application is fully optimized for mobile devices with:
-- Touch-friendly interface
-- Responsive design
-- Mobile-optimized audio controls
-- China-compatible resource loading
+The application supports both mock and production API backends:
 
-## 🎨 Key Components
+- **Mock Mode**: Built-in mock responses for development
+- **Production Mode**: REST API integration with configurable base URL
+- **Health Checking**: Automatic backend availability detection
 
-- **KukuCoach**: Main conversation interface
-- **VoiceVisualization**: Real-time audio visualization
-- **SessionHistory**: Conversation replay and statistics
-- **AudioRecorder**: Voice recording functionality
+## Browser Compatibility
 
-## 🔧 API Integration
+- Modern browsers with Web Audio API support
+- Chrome, Firefox, Safari, Edge (latest versions)
+- Mobile browsers on iOS and Android
 
-The app communicates with a backend API for:
-- Session creation and management
-- Audio processing and AI responses
-- Conversation history retrieval
+## Contributing
 
-## 📄 License
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-This project is proprietary software for Kuku Coach.
+## License
 
-## 🤝 Contributing
-
-This is a private project. For development questions, please contact the development team.
+This project is proprietary software developed for Kuku Coach.

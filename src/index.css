@@ -2,18 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* China-friendly font fallbacks */
 @layer base {
-  body {
-    font-family: 
-      /* Modern fonts */
-      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
-      /* Chinese system fonts */
-      'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 
-      /* Fallbacks */
-      Arial, sans-serif;
-  }
-
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
