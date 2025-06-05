@@ -19,7 +19,7 @@ export function KukuCoach() {
   const [appState, setAppState] = React.useState<AppState>("idle");
   const [isRecording, setIsRecording] = React.useState(false);
   const [isAISpeaking, setIsAISpeaking] = React.useState(false);
-  const [currentMessage, setCurrentMessage] = React.useState("I'm here to help you with your goals.\nWhat would you like to discuss today?");
+  const [currentMessage, setCurrentMessage] = React.useState("I’m here to help you think clearly and move forward. \nNot by giving advice, but by asking questions and supporting your thinking.\nWhat would you like to discuss today?");
   const [error, setError] = React.useState<string | null>(null);
   
   // Audio player ref
