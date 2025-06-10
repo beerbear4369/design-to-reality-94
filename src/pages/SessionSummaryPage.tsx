@@ -2,6 +2,7 @@ import * as React from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/contexts/SessionContext";
+import { ratingService } from "@/services/api/rating";
 
 interface LocationState {
   autoEnded?: boolean;
@@ -26,6 +27,8 @@ export default function SessionSummaryPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [rating, setRating] = React.useState<number>(0);
+  const [isSubmittingRating, setIsSubmittingRating] = React.useState<boolean>(false);
+  const [ratingSuccess, setRatingSuccess] = React.useState<boolean>(false);
   const { startSession } = useSession();
   
   // Get navigation state for auto-ended sessions
@@ -160,6 +163,54 @@ export default function SessionSummaryPage() {
     };
   }
   
+  // Load existing rating on mount
+  React.useEffect(() => {
+    if (sessionId) {
+      const loadExistingRating = async () => {
+        try {
+          const result = await ratingService.getRating(sessionId);
+          if (result.success && result.data?.hasRating) {
+            setRating(result.data.rating || 0);
+            setRatingSuccess(true);
+            console.log('📊 Loaded existing rating:', result.data.rating);
+          }
+        } catch (error) {
+          console.error('Failed to load existing rating:', error);
+        }
+      };
+
+      loadExistingRating();
+    }
+  }, [sessionId]);
+
+  // Handle rating change and auto-save to backend
+  const handleRatingChange = async (newRating: number) => {
+    if (!sessionId || isSubmittingRating) return;
+    
+    setRating(newRating);
+    setIsSubmittingRating(true);
+    
+    try {
+      console.log('📊 Submitting rating:', newRating, 'for session:', sessionId);
+      const result = await ratingService.submitRating(sessionId, newRating);
+      
+      if (result.success) {
+        setRatingSuccess(true);
+        console.log('✅ Rating saved successfully');
+      } else {
+        console.error('❌ Rating submission failed:', result.error);
+        // Reset rating on failure
+        setRating(0);
+      }
+    } catch (error) {
+      console.error('❌ Rating submission error:', error);
+      // Reset rating on failure
+      setRating(0);
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+  
   const handleStartNewSession = async () => {
     try {
       // Clean up persisted summary data when starting new session
@@ -241,8 +292,11 @@ export default function SessionSummaryPage() {
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
-                  onClick={() => setRating(star)}
-                  className="text-3xl focus:outline-none"
+                  onClick={() => handleRatingChange(star)}
+                  disabled={isSubmittingRating}
+                  className={`text-3xl focus:outline-none transition-all duration-200 ${
+                    isSubmittingRating ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'
+                  }`}
                 >
                   <span className={`${rating >= star ? 'text-yellow-400' : 'text-white/30'}`}>
                     ★
@@ -250,6 +304,9 @@ export default function SessionSummaryPage() {
                 </button>
               ))}
             </div>
+            {ratingSuccess && (
+              <p className="text-green-400 text-xs mt-2">✓ Rating saved</p>
+            )}
           </div>
         </div>
         
