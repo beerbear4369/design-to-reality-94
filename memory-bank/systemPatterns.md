@@ -79,6 +79,34 @@ flowchart TD
     end
 ```
 
+### Complete Session Lifecycle Pattern
+```mermaid
+flowchart TD
+    subgraph Session Management
+        CREATE[Create Session] --> INIT[Initialize Context]
+        INIT --> CONV[Conversation Loop]
+        CONV --> |Auto/Manual| END[End Session]
+        END --> SUMMARY[Generate Summary]
+        SUMMARY --> RATE[Collect Rating]
+        RATE --> PERSIST[Persist Session Data]
+    end
+
+    subgraph Conversation Loop
+        IDLE[Idle State] --> RECORD[Recording Audio]
+        RECORD --> PROCESS[Processing Audio]
+        PROCESS --> RESPOND[AI Response]
+        RESPOND --> |Continue| IDLE
+        RESPOND --> |Wrap Up| END
+    end
+
+    subgraph Data Persistence
+        PERSIST --> SESSIONS[Sessions Table]
+        PERSIST --> MESSAGES[Messages Table]
+        SESSIONS --> ANALYTICS[Session Analytics]
+        MESSAGES --> HISTORY[Conversation History]
+    end
+```
+
 ## Key Design Patterns
 
 ### State Management
@@ -102,6 +130,8 @@ flowchart TD
 - **Optimistic Updates**: Update UI immediately, handle errors gracefully
 - **Error Recovery**: Reset state on failure, provide user feedback
 - **Type Safety**: Full TypeScript interfaces for rating data structures
+- **Backend Validation**: Server-side validation of rating values (1-5 scale)
+- **Session State Validation**: Only ended sessions can be rated
 
 ### Audio Processing Pattern
 - **Web Audio API**: For real-time audio processing and analysis
@@ -120,6 +150,29 @@ flowchart TD
 - **Fallback Mechanisms**: Providing alternatives when primary methods fail
 - **Error Propagation**: Bubbling errors up to UI for user feedback
 - **Graceful Degradation**: Continuing core functionality when secondary features fail
+- **Database Resilience**: Continue operation when database unavailable
+
+### Database Synchronization Pattern
+```mermaid
+flowchart TD
+    subgraph Memory Operations
+        MEMORY[In-Memory State] --> UPDATE[State Update]
+        UPDATE --> SYNC[Sync to Database]
+    end
+
+    subgraph Database Operations
+        SYNC --> VALIDATE[Validate Data]
+        VALIDATE --> PERSIST[Persist to Supabase]
+        PERSIST --> CONFIRM[Confirm Success]
+    end
+
+    subgraph Error Handling
+        PERSIST --> |Failure| ROLLBACK[Rollback Memory State]
+        ROLLBACK --> RETRY[Retry Logic]
+        RETRY --> |Success| CONFIRM
+        RETRY --> |Failure| ERROR[Error State]
+    end
+```
 
 ## Component Hierarchy
 
@@ -132,6 +185,7 @@ flowchart TD
     subgraph Pages
         KC[KukuCoach Page]
         SP[SessionSummary Page]
+        HP[SessionHistory Page]
     end
 
     subgraph Components
@@ -140,6 +194,7 @@ flowchart TD
         AM[AIMessage]
         TI[ThinkingIndicator]
         RT[Rating Component]
+        SR[StarRating]
     end
 
     subgraph Hooks
@@ -147,21 +202,25 @@ flowchart TD
         UAL[useAudioLevel]
         US[useSession]
         UC[useConversation]
+        UR[useRating]
     end
 
     subgraph Services
         AG[audio-generator]
         API[api-service]
         RS[rating-service]
+        DB[database-service]
     end
 
     RC --> KC
     RC --> SP
+    RC --> HP
     KC --> RB
     KC --> VV
     KC --> AM
     KC --> TI
     SP --> RT
+    RT --> SR
     KC --> UC
     UC --> UAR
     UC --> UAL
@@ -171,9 +230,10 @@ flowchart TD
     UAL --> VV
     US --> API
     US --> AG
+    RS --> DB
 ```
 
-## New Architecture
+## Complete System Architecture
 
 ```mermaid
 flowchart TD
@@ -182,6 +242,8 @@ flowchart TD
         RB[RecordingButton]
         VV[VoiceVisualization]
         RT[Rating Component]
+        SP[SessionSummary]
+        HP[SessionHistory]
     end
     
     subgraph State Management Layer
@@ -195,27 +257,44 @@ flowchart TD
         API[Session API]
         AG[Audio Generator]
         RATING[Rating Service]
+        HISTORY[History Service]
+    end
+
+    subgraph Backend Layer
+        REST[REST API Endpoints]
+        AUDIO[Audio Processing]
+        AI[AI Response Generation]
+        DB[Supabase Database]
     end
     
     KC --> RB
     KC --> VV
     KC --> UC
+    SP --> RT
+    HP --> HISTORY
     RT --> RC
     RB --> UC
     UC --> API
     RC --> RATING
-    API --> AG
+    API --> REST
+    RATING --> REST
+    HISTORY --> REST
+    REST --> AUDIO
+    REST --> AI
+    REST --> DB
 ```
 
 ## Data Flow Architecture
 
-### Conversation Flow
+### Complete Session Flow
 ```mermaid
 flowchart LR
     subgraph Session Lifecycle
         INIT[Initialize Session] -->|Create Session ID| READY[Ready State]
-        READY -->|End Session| SUMMARY[Session Summary]
-        SUMMARY -->|Rate Session| RATING[Rating System]
+        READY -->|Conversation| ACTIVE[Active Session]
+        ACTIVE -->|Auto/Manual End| SUMMARY[Session Summary]
+        SUMMARY -->|Rate Session| RATING[Rating Collection]
+        RATING -->|Complete| HISTORY[Session History]
     end
     
     subgraph Conversation Flow
@@ -223,6 +302,7 @@ flowchart LR
         REC -->|User stops| PROC[Processing]
         PROC -->|API Call| RESP[Responding]
         RESP -->|Audio finishes| IDLE
+        RESP -->|Wrap-up trigger| SUMMARY
     end
 ```
 
@@ -230,17 +310,17 @@ flowchart LR
 ```mermaid
 flowchart TD
     subgraph Session Management
-        CS[Create Session] -->|POST /api/sessions/create| SID[Session ID]
+        CS[Create Session] -->|POST /api/sessions| SID[Session ID]
         SID -->|Store in Context| READY[Ready State]
-        READY -->|GET /api/sessions/{id}/history| HIST[Load History]
-        READY -->|PUT /api/sessions/{id}/end| END[End Session]
+        READY -->|GET /api/sessions/{id}/messages| HIST[Load History]
+        READY -->|POST /api/sessions/{id}/end| END[End Session]
         END -->|GET /api/sessions/{id}/rating| RATE_LOAD[Load Rating]
         RATE_LOAD -->|POST /api/sessions/{id}/rating| RATE_SAVE[Save Rating]
     end
     
     subgraph Message Exchange
         REC[Audio Recording] -->|Record Complete| BLOB[Audio Blob]
-        BLOB -->|POST /api/sessions/{id}/audio| PROC[Process Audio]
+        BLOB -->|POST /api/sessions/{id}/messages| PROC[Process Audio]
         PROC -->|Backend Processing| RESP[Response]
         RESP -->|Text & Audio URL| DISP[Display & Play]
     end
@@ -258,6 +338,8 @@ flowchart TD
     UPDATE -->|POST /api/sessions/{id}/rating| SAVE[Save to Backend]
     SAVE -->|Success| SUCCESS[Show Success Message]
     SAVE -->|Error| ERROR[Reset Rating & Show Error]
+    
+    SUCCESS -->|Edit Rating| USER
 ```
 
 ### Audio Visualization Flow
@@ -268,4 +350,29 @@ flowchart TD
     ANLZ1 -->|Same processing| FREQ[Frequency Data]
     ANLZ2 -->|Same processing| FREQ
     FREQ --> VIZ[Visualization Render]
+    VIZ --> |Real-time updates| UI[User Interface]
+```
+
+### Database Persistence Flow
+```mermaid
+flowchart TD
+    subgraph Session Data
+        CREATE[Session Created] --> SESSION_DB[Sessions Table]
+        MESSAGES[Message Exchange] --> MESSAGE_DB[Messages Table]
+        RATING[Rating Submitted] --> |Update| SESSION_DB
+        END_SESSION[Session Ended] --> |Update| SESSION_DB
+    end
+
+    subgraph Synchronization
+        MEMORY[In-Memory State] --> |Real-time sync| SESSION_DB
+        SESSION_DB --> |Load on startup| MEMORY
+        MESSAGE_DB --> |History retrieval| HISTORY_UI[History Display]
+    end
+
+    subgraph Analytics
+        SESSION_DB --> STATS[Session Statistics]
+        MESSAGE_DB --> CONVERSATION[Conversation Analytics]
+        STATS --> DASHBOARD[Analytics Dashboard]
+        CONVERSATION --> DASHBOARD
+    end
 ```
