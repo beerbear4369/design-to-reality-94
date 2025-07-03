@@ -7,7 +7,7 @@ import NotFound from "./pages/NotFound";
 import { SessionProvider } from "./contexts/SessionContext";
 
 // Import our new page components
-import StartSessionPage from "./pages/StartSessionPage";
+import LandingPage from "./pages/LandingPage";
 import ActiveSessionPage from "./pages/ActiveSessionPage";
 import SessionSummaryPage from "./pages/SessionSummaryPage";
 import SessionHistoryPage from "./pages/SessionHistoryPage";
@@ -23,7 +23,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Main application routes */}
-            <Route path="/" element={<StartSessionPage />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/session/:sessionId" element={<ActiveSessionPage />} />
             <Route path="/summary/:sessionId" element={<SessionSummaryPage />} />
             <Route path="/session/:sessionId/history" element={<SessionHistoryPage />} />
