@@ -2,12 +2,14 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/contexts/SessionContext";
+import { useSequentialTypewriter, useSequentialWordTypewriter } from "@/hooks/useTypewriter";
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { startSession } = useSession();
   const [step, setStep] = React.useState(1);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showNextButton, setShowNextButton] = React.useState(false);
 
   const handleStartSession = async () => {
     try {
@@ -29,10 +31,25 @@ export default function LandingPage() {
   const handleNext = () => {
     if (step < 3) {
       setStep(step + 1);
+      setShowNextButton(false); // Reset button for next step
     } else {
       handleStartSession();
     }
   };
+
+  // Reset button visibility and add transition delay when step changes
+  React.useEffect(() => {
+    setShowNextButton(false);
+    
+    // Add a small delay when transitioning to allow previous animations to clean up
+    if (step > 1) {
+      const timeoutId = setTimeout(() => {
+        // This ensures the previous step's animation is fully cleaned up
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [step]);
 
   const renderProgressDots = () => {
     return (
@@ -49,52 +66,204 @@ export default function LandingPage() {
     );
   };
 
+  // Define text content for each step
+  const step1Texts = [
+    "Hello thinker",
+    "I'm really glad you are here.",
+    "Thanks not just for your time, but also for your TRUST. That means a lot."
+  ];
+
+  const step2Texts = [
+    "Who you will meet here?",
+    "Think Clear, an AI thinking buddy who talk things through with you by ASKing you questions, to assist you reflect, aware, and change, just like a human coach will do.",
+    "What you will NOT get here?",
+    "Another AI to give you spoon feed answer",
+    "A magic, one-click cure", 
+    "A cheer-bot that agrees with everything you say"
+  ];
+
+  const step3Texts = [
+    "Sounds Good? Lets get ready!",
+    "All you need is",
+    "A tough decision, big goal, stubborn challenge or just a topic you really wanna to explore",
+    "20-30 minutes undisturbed time to be with yourself",
+    "A open mind to dive in to discovery mode."
+  ];
+
+  // Create separate animation instances for each step
+  const step1Animation = useSequentialTypewriter({
+    texts: step === 1 ? step1Texts : [],
+    speed: 40,
+    delayBetween: 800,
+    initialDelay: 500,
+    onAllComplete: () => {
+      if (step === 1) setShowNextButton(true);
+    }
+  });
+
+  const step2Animation = useSequentialWordTypewriter({
+    texts: step === 2 ? step2Texts : [],
+    speed: 200, // milliseconds per word (faster than character speed)
+    delayBetween: 600,
+    initialDelay: 300,
+    onAllComplete: () => {
+      if (step === 2) setShowNextButton(true);
+    }
+  });
+
+  const step3Animation = useSequentialTypewriter({
+    texts: step === 3 ? step3Texts : [],
+    speed: 35,
+    delayBetween: 500,
+    initialDelay: 300,
+    onAllComplete: () => {
+      if (step === 3) setShowNextButton(true);
+    }
+  });
+
   const renderStepContent = () => {
     switch (step) {
       case 1:
         return (
           <div className="text-center space-y-6">
             <div className="text-6xl mb-4">👋</div>
-            <h1 className="text-3xl font-bold text-white mb-4">
-              Hello thinker
-            </h1>
-            <p className="text-xl text-gray-300 leading-relaxed">
-              I'm really glad you are here.
-            </p>
-            <p className="text-xl text-gray-300 leading-relaxed">
-              Thanks not just for your time, but also for your <span className="text-white font-semibold">TRUST</span>. That means a lot.
-            </p>
+            
+            {/* Fixed position for title */}
+            <div className="min-h-[60px] flex items-center justify-center">
+              {step1Animation.displayedTexts[0] && (
+                <h1 className="text-3xl font-bold text-white">
+                  {step1Animation.displayedTexts[0]}
+                  {step1Animation.currentStep === 0 && !step1Animation.isComplete && (
+                    <span className="animate-pulse">|</span>
+                  )}
+                </h1>
+              )}
+            </div>
+            
+            {/* Fixed position for first paragraph */}
+            <div className="min-h-[40px] flex items-center justify-center">
+              {step1Animation.displayedTexts[1] && (
+                <p className="text-xl text-gray-300 leading-relaxed">
+                  {step1Animation.displayedTexts[1]}
+                  {step1Animation.currentStep === 1 && !step1Animation.isComplete && (
+                    <span className="animate-pulse">|</span>
+                  )}
+                </p>
+              )}
+            </div>
+            
+            {/* Fixed position for second paragraph */}
+            <div className="min-h-[60px] flex items-center justify-center">
+              {step1Animation.displayedTexts[2] && (
+                <p className="text-xl text-gray-300 leading-relaxed">
+                  {step1Animation.displayedTexts[2].includes("TRUST") ? (
+                    <>
+                      Thanks not just for your time, but also for your{" "}
+                      <span className="text-white font-semibold">TRUST</span>. That means a lot.
+                    </>
+                  ) : (
+                    step1Animation.displayedTexts[2]
+                  )}
+                  {step1Animation.currentStep === 2 && !step1Animation.isComplete && (
+                    <span className="animate-pulse">|</span>
+                  )}
+                </p>
+              )}
+            </div>
           </div>
         );
       
       case 2:
         return (
           <div className="text-center space-y-6">
-            <h1 className="text-3xl font-bold text-white mb-6">
-              Who you will meet here?
-            </h1>
-            <p className="text-lg text-gray-300 leading-relaxed mb-6">
-              Think Clear, an AI thinking buddy who talk things through with you by <span className="text-indigo-400 font-semibold">ASKing</span> you questions, 
-              to assist you reflect, aware, and change, just like a human coach will do.
-            </p>
+            {/* Fixed position for title */}
+            <div className="min-h-[60px] flex items-center justify-center">
+              {step2Animation.displayedTexts[0] && (
+                <h1 className="text-3xl font-bold text-white">
+                  {step2Animation.displayedTexts[0]}
+                  {step2Animation.currentStep === 0 && !step2Animation.isComplete && (
+                    <span className="animate-pulse">|</span>
+                  )}
+                </h1>
+              )}
+            </div>
+            
+            {/* Fixed position for description */}
+            <div className="min-h-[100px] flex items-center justify-center">
+              {step2Animation.displayedTexts[1] && (
+                <p className="text-lg text-gray-300 leading-relaxed">
+                  {step2Animation.displayedTexts[1].includes("ASKing") ? (
+                    <>
+                      Think Clear, an AI thinking buddy who talk things through with you by{" "}
+                      <span className="text-indigo-400 font-semibold">ASKing</span> you questions, 
+                      to assist you reflect, aware, and change, just like a human coach will do.
+                    </>
+                  ) : (
+                    step2Animation.displayedTexts[1]
+                  )}
+                  {step2Animation.currentStep === 1 && !step2Animation.isComplete && (
+                    <span className="animate-pulse">|</span>
+                  )}
+                </p>
+              )}
+            </div>
             
             <div className="text-left space-y-4">
-              <h2 className="text-xl font-semibold text-white">
-                What you will <em className="text-red-400">NOT</em> get here?
-              </h2>
-              <ul className="text-gray-300 space-y-2">
-                <li className="flex items-start">
-                  <span className="text-red-400 mr-2">•</span>
-                  Another AI to give you spoon feed answer
-                </li>
-                <li className="flex items-start">
-                  <span className="text-red-400 mr-2">•</span>
-                  A magic, one-click cure
-                </li>
-                <li className="flex items-start">
-                  <span className="text-red-400 mr-2">•</span>
-                  A cheer-bot that agrees with everything you say
-                </li>
+              {/* Fixed position for NOT section title */}
+              <div className="min-h-[40px] flex items-center">
+                {step2Animation.displayedTexts[2] && (
+                  <h2 className="text-xl font-semibold text-white">
+                    What you will <em className="text-red-400">NOT</em> get here?
+                    {step2Animation.currentStep === 2 && !step2Animation.isComplete && (
+                      <span className="animate-pulse">|</span>
+                    )}
+                  </h2>
+                )}
+              </div>
+              
+              {/* Fixed positions for bullet points */}
+              <ul className="text-gray-300 space-y-3">
+                <div className="min-h-[32px] flex items-start">
+                  {step2Animation.displayedTexts[3] && (
+                    <li className="flex items-start w-full">
+                      <span className="text-red-400 mr-2">•</span>
+                      <span>
+                        {step2Animation.displayedTexts[3]}
+                        {step2Animation.currentStep === 3 && !step2Animation.isComplete && (
+                          <span className="animate-pulse">|</span>
+                        )}
+                      </span>
+                    </li>
+                  )}
+                </div>
+                
+                <div className="min-h-[32px] flex items-start">
+                  {step2Animation.displayedTexts[4] && (
+                    <li className="flex items-start w-full">
+                      <span className="text-red-400 mr-2">•</span>
+                      <span>
+                        {step2Animation.displayedTexts[4]}
+                        {step2Animation.currentStep === 4 && !step2Animation.isComplete && (
+                          <span className="animate-pulse">|</span>
+                        )}
+                      </span>
+                    </li>
+                  )}
+                </div>
+                
+                <div className="min-h-[32px] flex items-start">
+                  {step2Animation.displayedTexts[5] && (
+                    <li className="flex items-start w-full">
+                      <span className="text-red-400 mr-2">•</span>
+                      <span>
+                        {step2Animation.displayedTexts[5]}
+                        {step2Animation.currentStep === 5 && !step2Animation.isComplete && (
+                          <span className="animate-pulse">|</span>
+                        )}
+                      </span>
+                    </li>
+                  )}
+                </div>
               </ul>
             </div>
           </div>
@@ -103,27 +272,74 @@ export default function LandingPage() {
       case 3:
         return (
           <div className="text-center space-y-6">
-            <h1 className="text-3xl font-bold text-white mb-6">
-              Sounds Good? Lets get ready!
-            </h1>
+            {/* Fixed position for title */}
+            <div className="min-h-[60px] flex items-center justify-center">
+              {step3Animation.displayedTexts[0] && (
+                <h1 className="text-3xl font-bold text-white">
+                  {step3Animation.displayedTexts[0]}
+                  {step3Animation.currentStep === 0 && !step3Animation.isComplete && (
+                    <span className="animate-pulse">|</span>
+                  )}
+                </h1>
+              )}
+            </div>
             
             <div className="text-left space-y-4">
-              <h2 className="text-xl font-semibold text-white">
-                All you need is
-              </h2>
+              {/* Fixed position for subtitle */}
+              <div className="min-h-[40px] flex items-center">
+                {step3Animation.displayedTexts[1] && (
+                  <h2 className="text-xl font-semibold text-white">
+                    {step3Animation.displayedTexts[1]}
+                    {step3Animation.currentStep === 1 && !step3Animation.isComplete && (
+                      <span className="animate-pulse">|</span>
+                    )}
+                  </h2>
+                )}
+              </div>
+              
+              {/* Fixed positions for bullet points */}
               <ul className="text-gray-300 space-y-3">
-                <li className="flex items-start">
-                  <span className="text-indigo-400 mr-2">•</span>
-                  A tough decision, big goal, stubborn challenge or just a topic you really wanna to explore
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-400 mr-2">•</span>
-                  20-30 minutes undisturbed time to be with yourself
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-400 mr-2">•</span>
-                  A open mind to dive in to discovery mode.
-                </li>
+                <div className="min-h-[48px] flex items-start">
+                  {step3Animation.displayedTexts[2] && (
+                    <li className="flex items-start w-full">
+                      <span className="text-indigo-400 mr-2">•</span>
+                      <span>
+                        {step3Animation.displayedTexts[2]}
+                        {step3Animation.currentStep === 2 && !step3Animation.isComplete && (
+                          <span className="animate-pulse">|</span>
+                        )}
+                      </span>
+                    </li>
+                  )}
+                </div>
+                
+                <div className="min-h-[48px] flex items-start">
+                  {step3Animation.displayedTexts[3] && (
+                    <li className="flex items-start w-full">
+                      <span className="text-indigo-400 mr-2">•</span>
+                      <span>
+                        {step3Animation.displayedTexts[3]}
+                        {step3Animation.currentStep === 3 && !step3Animation.isComplete && (
+                          <span className="animate-pulse">|</span>
+                        )}
+                      </span>
+                    </li>
+                  )}
+                </div>
+                
+                <div className="min-h-[48px] flex items-start">
+                  {step3Animation.displayedTexts[4] && (
+                    <li className="flex items-start w-full">
+                      <span className="text-indigo-400 mr-2">•</span>
+                      <span>
+                        {step3Animation.displayedTexts[4]}
+                        {step3Animation.currentStep === 4 && !step3Animation.isComplete && (
+                          <span className="animate-pulse">|</span>
+                        )}
+                      </span>
+                    </li>
+                  )}
+                </div>
               </ul>
             </div>
           </div>
@@ -134,29 +350,78 @@ export default function LandingPage() {
     }
   };
 
+  // Skip animation handler - only skip the current step's animation
+  const handleSkipAnimation = () => {
+    switch (step) {
+      case 1:
+        step1Animation.skip();
+        break;
+      case 2:
+        step2Animation.skip();
+        break;
+      case 3:
+        step3Animation.skip();
+        break;
+    }
+  };
+
+  // Check if the current step's animation is running
+  const isAnimating = React.useMemo(() => {
+    switch (step) {
+      case 1:
+        return !step1Animation.isComplete;
+      case 2:
+        return !step2Animation.isComplete;
+      case 3:
+        return !step3Animation.isComplete;
+      default:
+        return false;
+    }
+  }, [step, step1Animation.isComplete, step2Animation.isComplete, step3Animation.isComplete]);
+
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="max-w-lg mx-auto w-full space-y-8">
-        {/* App Name Header */}
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-light text-gray-400 tracking-wide">Think Clear</h1>
-        </div>
-        
+    <div className="min-h-screen bg-[#0D0D0D] flex flex-col">
+      {/* Responsive container for landing content */}
+      <div className="w-full max-w-lg mx-auto flex-1 flex flex-col justify-center p-4 sm:p-6">
+        {/* Progress indicator */}
         {renderProgressDots()}
         
-        <div className="min-h-[400px] flex flex-col justify-center">
-          {renderStepContent()}
+        {/* Content sections */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-md">
+            {renderStepContent()}
+          </div>
         </div>
         
-        <div className="pt-8">
-          <Button 
-            onClick={handleNext}
-            size="lg" 
-            className="w-full py-6 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-medium rounded-xl"
-            disabled={isLoading}
+        {/* Navigation buttons */}
+        <div className="flex flex-col items-center mt-8 space-y-4">
+          {/* Skip animation button */}
+          <Button
+            onClick={handleSkipAnimation}
+            variant="ghost"
+            className="text-gray-400 hover:text-white text-sm underline hover:bg-transparent"
           >
-            {step === 3 ? (isLoading ? "Starting..." : "Let's go") : "Next"}
+            Skip introduction
           </Button>
+          
+          {/* Main action button */}
+          {showNextButton && (
+            <Button 
+              onClick={handleNext} 
+              size="lg" 
+              className="w-full max-w-xs py-4 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Starting...</span>
+                </div>
+              ) : (
+                step < 3 ? "Continue" : "Start Your Journey"
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>

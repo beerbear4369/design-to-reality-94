@@ -26,19 +26,33 @@ export default function StartSessionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-start md:items-center justify-start md:justify-center p-4">
-      <div className="max-w-md w-full flex flex-col items-start mt-24 md:mt-0 md:ml-16 space-y-6">
-        <h1 className="text-4xl font-bold text-white">Think Clear</h1>
-        <p className="text-xl text-gray-300">Your AI Coaching Assistant</p>
-        
-        <Button 
-          onClick={handleStartSession} 
-          size="lg" 
-          className="mt-12 py-6 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-medium rounded-xl"
-          disabled={isLoading}
-        >
-          {isLoading ? "Starting..." : "Start Session"}
-        </Button>
+    <div className="min-h-screen bg-[#0D0D0D] flex flex-col">
+      {/* Responsive container for start session content */}
+      <div className="w-full max-w-lg mx-auto flex-1 flex flex-col justify-center p-4 sm:p-6">
+        <div className="text-center space-y-6">
+          <div className="space-y-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">Think Clear</h1>
+            <p className="text-lg sm:text-xl text-gray-300">Your AI Coaching Assistant</p>
+          </div>
+          
+          <div className="pt-8">
+            <Button 
+              onClick={handleStartSession} 
+              size="lg" 
+              className="w-full max-w-xs py-4 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Starting...</span>
+                </div>
+              ) : (
+                "Start Session"
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
