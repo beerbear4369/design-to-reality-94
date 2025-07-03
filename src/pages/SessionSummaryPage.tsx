@@ -253,80 +253,87 @@ export default function SessionSummaryPage() {
   };
   
   return (
-    <div className="min-h-screen bg-[#0D0D0D] flex flex-col items-center p-4">
-      <div className="max-w-2xl w-full flex flex-col items-center space-y-8 pt-8">
-        <h1 className="text-2xl font-bold text-white/90">Session Summary</h1>
-        
-        {/* Development indicator - can be removed in production */}
-        {process.env.NODE_ENV === 'development' && (
-          <p className="text-white/50 text-xs">{getSessionTypeIndicator()}</p>
-        )}
-        
-        <div className="bg-[#080722] border border-white/10 rounded-[20px] p-6 w-full">
-          {parsedSummary.isStructured ? (
-            <div className="space-y-6">
-              {parsedSummary.sections.map((section, index) => (
-                <div key={index} className="space-y-3">
-                  <h3 className="text-white/90 font-semibold text-lg border-b border-white/20 pb-2">
-                    {section.title}
-                  </h3>
-                  <div className="space-y-2">
-                    {section.content.map((item, itemIndex) => (
-                      <p key={itemIndex} className="text-white/70 text-base leading-relaxed">
-                        {item}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-white/70 text-base leading-relaxed">
-              {parsedSummary.content}
-            </p>
-          )}
-          
-          <div className="mt-8 mb-4 text-center">
-            <p className="text-white/70 text-sm mb-4">How was your coaching experience?</p>
-            <div className="flex justify-center space-x-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onClick={() => handleRatingChange(star)}
-                  disabled={isSubmittingRating}
-                  className={`text-3xl focus:outline-none transition-all duration-200 ${
-                    isSubmittingRating ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'
-                  }`}
-                >
-                  <span className={`${rating >= star ? 'text-yellow-400' : 'text-white/30'}`}>
-                    ★
-                  </span>
-                </button>
-              ))}
-            </div>
-            {ratingSuccess && (
-              <p className="text-green-400 text-xs mt-2">✓ Rating saved</p>
+    <div className="min-h-screen bg-[#0D0D0D] flex flex-col">
+      <div className="flex-1 flex flex-col justify-between p-4">
+        <div className="max-w-2xl w-full mx-auto flex flex-col flex-1">
+          <div className="text-center pt-4 pb-6">
+            <h1 className="text-xl md:text-2xl font-bold text-white/90">Session Summary</h1>
+            
+            {/* Development indicator - can be removed in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <p className="text-white/50 text-xs mt-2">{getSessionTypeIndicator()}</p>
             )}
+          </div>
+          
+          <div className="bg-[#080722] border border-white/10 rounded-[20px] p-4 md:p-6 w-full flex-1">
+            {parsedSummary.isStructured ? (
+              <div className="space-y-4 md:space-y-6">
+                {parsedSummary.sections.map((section, index) => (
+                  <div key={index} className="space-y-2 md:space-y-3">
+                    <h3 className="text-white/90 font-semibold text-base md:text-lg border-b border-white/20 pb-2">
+                      {section.title}
+                    </h3>
+                    <div className="space-y-2">
+                      {section.content.map((item, itemIndex) => (
+                        <p key={itemIndex} className="text-white/70 text-sm md:text-base leading-relaxed">
+                          {item}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-white/70 text-sm md:text-base leading-relaxed">
+                {parsedSummary.content}
+              </p>
+            )}
+            
+            <div className="mt-6 md:mt-8 mb-4 text-center">
+              <p className="text-white/70 text-sm mb-4">How was your coaching experience?</p>
+              <div className="flex justify-center space-x-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => handleRatingChange(star)}
+                    disabled={isSubmittingRating}
+                    className={`text-3xl focus:outline-none transition-all duration-200 ${
+                      isSubmittingRating ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'
+                    }`}
+                  >
+                    <span className={`${rating >= star ? 'text-yellow-400' : 'text-white/30'}`}>
+                      ★
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {ratingSuccess && (
+                <p className="text-green-400 text-xs mt-2">✓ Rating saved</p>
+              )}
+            </div>
           </div>
         </div>
         
-        <div className="flex flex-col space-y-4 w-full mt-4">
-          <Button 
-            onClick={handleStartNewSession} 
-            size="lg" 
-            className="w-full bg-[#312CA3] hover:bg-[#413DB3] text-white/90 font-semibold py-4 rounded-xl"
-          >
-            Start New Session
-          </Button>
-          
-          <Button 
-            onClick={handleViewHistory} 
-            variant="outline"
-            size="lg"
-            className="w-full bg-[#080722] border-white/10 text-white/90 hover:bg-[#121035] font-semibold py-4 rounded-xl"
-          >
-            View Session History
-          </Button>
+        {/* Action buttons always visible at bottom */}
+        <div className="max-w-2xl w-full mx-auto pt-4 pb-safe">
+          <div className="flex flex-col space-y-3 md:space-y-4">
+            <Button 
+              onClick={handleStartNewSession} 
+              size="lg" 
+              className="w-full bg-[#312CA3] hover:bg-[#413DB3] text-white/90 font-semibold py-4 rounded-xl"
+            >
+              Start New Session
+            </Button>
+            
+            <Button 
+              onClick={handleViewHistory} 
+              variant="outline"
+              size="lg"
+              className="w-full bg-[#080722] border-white/10 text-white/90 hover:bg-[#121035] font-semibold py-4 rounded-xl"
+            >
+              View Session History
+            </Button>
+          </div>
         </div>
       </div>
     </div>

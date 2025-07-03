@@ -125,13 +125,13 @@ export default function LandingPage() {
     switch (step) {
       case 1:
         return (
-          <div className="text-center space-y-6">
-            <div className="text-6xl mb-4">👋</div>
+          <div className="text-center space-y-4 md:space-y-6">
+            <div className="text-5xl md:text-6xl mb-2 md:mb-4">👋</div>
             
             {/* Fixed position for title */}
-            <div className="min-h-[60px] flex items-center justify-center">
+            <div className="min-h-[50px] md:min-h-[60px] flex items-center justify-center">
               {step1Animation.displayedTexts[0] && (
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
                   {step1Animation.displayedTexts[0]}
                   {step1Animation.currentStep === 0 && !step1Animation.isComplete && (
                     <span className="animate-pulse">|</span>
@@ -141,9 +141,9 @@ export default function LandingPage() {
             </div>
             
             {/* Fixed position for first paragraph */}
-            <div className="min-h-[40px] flex items-center justify-center">
+            <div className="min-h-[30px] md:min-h-[40px] flex items-center justify-center">
               {step1Animation.displayedTexts[1] && (
-                <p className="text-xl text-gray-300 leading-relaxed">
+                <p className="text-lg md:text-xl text-gray-300 leading-relaxed">
                   {step1Animation.displayedTexts[1]}
                   {step1Animation.currentStep === 1 && !step1Animation.isComplete && (
                     <span className="animate-pulse">|</span>
@@ -153,9 +153,9 @@ export default function LandingPage() {
             </div>
             
             {/* Fixed position for second paragraph */}
-            <div className="min-h-[60px] flex items-center justify-center">
+            <div className="min-h-[50px] md:min-h-[60px] flex items-center justify-center">
               {step1Animation.displayedTexts[2] && (
-                <p className="text-xl text-gray-300 leading-relaxed">
+                <p className="text-lg md:text-xl text-gray-300 leading-relaxed">
                   <span dangerouslySetInnerHTML={{ __html: step1Animation.displayedTexts[2] }} />
                   {step1Animation.currentStep === 2 && !step1Animation.isComplete && (
                     <span className="animate-pulse">|</span>
@@ -168,11 +168,11 @@ export default function LandingPage() {
       
       case 2:
         return (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-4 md:space-y-6">
             {/* Fixed position for title */}
-            <div className="min-h-[60px] flex items-center justify-center">
+            <div className="min-h-[50px] md:min-h-[60px] flex items-center justify-center">
               {step2Animation.displayedTexts[0] && (
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
                   {step2Animation.displayedTexts[0]}
                   {step2Animation.currentStep === 0 && !step2Animation.isComplete && (
                     <span className="animate-pulse">|</span>
@@ -182,9 +182,9 @@ export default function LandingPage() {
             </div>
             
             {/* Fixed position for description */}
-            <div className="min-h-[100px] flex items-center justify-center">
+            <div className="min-h-[80px] md:min-h-[100px] flex items-center justify-center">
               {step2Animation.displayedTexts[1] && (
-                <p className="text-lg text-gray-300 leading-relaxed">
+                <p className="text-base md:text-lg text-gray-300 leading-relaxed">
                   <span dangerouslySetInnerHTML={{ __html: step2Animation.displayedTexts[1] }} />
                   {step2Animation.currentStep === 1 && !step2Animation.isComplete && (
                     <span className="animate-pulse">|</span>
@@ -193,11 +193,11 @@ export default function LandingPage() {
               )}
             </div>
             
-            <div className="text-left space-y-4">
+            <div className="text-left space-y-3 md:space-y-4">
               {/* Fixed position for NOT section title */}
-              <div className="min-h-[40px] flex items-center">
+              <div className="min-h-[30px] md:min-h-[40px] flex items-center">
                 {step2Animation.displayedTexts[2] && (
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-lg md:text-xl font-semibold text-white">
                     What you will <em className="text-red-400">NOT</em> get here?
                     {step2Animation.currentStep === 2 && !step2Animation.isComplete && (
                       <span className="animate-pulse">|</span>
@@ -207,12 +207,12 @@ export default function LandingPage() {
               </div>
               
               {/* Fixed positions for bullet points */}
-              <ul className="text-gray-300 space-y-3">
-                <div className="min-h-[32px] flex items-start">
+              <ul className="text-gray-300 space-y-2 md:space-y-3">
+                <div className="min-h-[28px] md:min-h-[32px] flex items-start">
                   {step2Animation.displayedTexts[3] && (
                     <li className="flex items-start w-full">
                       <span className="text-red-400 mr-2">•</span>
-                      <span>
+                      <span className="text-sm md:text-base">
                         {step2Animation.displayedTexts[3]}
                         {step2Animation.currentStep === 3 && !step2Animation.isComplete && (
                           <span className="animate-pulse">|</span>
@@ -222,11 +222,11 @@ export default function LandingPage() {
                   )}
                 </div>
                 
-                <div className="min-h-[32px] flex items-start">
+                <div className="min-h-[28px] md:min-h-[32px] flex items-start">
                   {step2Animation.displayedTexts[4] && (
                     <li className="flex items-start w-full">
                       <span className="text-red-400 mr-2">•</span>
-                      <span>
+                      <span className="text-sm md:text-base">
                         {step2Animation.displayedTexts[4]}
                         {step2Animation.currentStep === 4 && !step2Animation.isComplete && (
                           <span className="animate-pulse">|</span>
@@ -236,11 +236,11 @@ export default function LandingPage() {
                   )}
                 </div>
                 
-                <div className="min-h-[32px] flex items-start">
+                <div className="min-h-[28px] md:min-h-[32px] flex items-start">
                   {step2Animation.displayedTexts[5] && (
                     <li className="flex items-start w-full">
                       <span className="text-red-400 mr-2">•</span>
-                      <span>
+                      <span className="text-sm md:text-base">
                         {step2Animation.displayedTexts[5]}
                         {step2Animation.currentStep === 5 && !step2Animation.isComplete && (
                           <span className="animate-pulse">|</span>
@@ -256,11 +256,11 @@ export default function LandingPage() {
       
       case 3:
         return (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-4 md:space-y-6">
             {/* Fixed position for title */}
-            <div className="min-h-[60px] flex items-center justify-center">
+            <div className="min-h-[50px] md:min-h-[60px] flex items-center justify-center">
               {step3Animation.displayedTexts[0] && (
-                <h1 className="text-3xl font-bold text-white">
+                <h1 className="text-2xl md:text-3xl font-bold text-white">
                   {step3Animation.displayedTexts[0]}
                   {step3Animation.currentStep === 0 && !step3Animation.isComplete && (
                     <span className="animate-pulse">|</span>
@@ -269,11 +269,11 @@ export default function LandingPage() {
               )}
             </div>
             
-            <div className="text-left space-y-4">
+            <div className="text-left space-y-3 md:space-y-4">
               {/* Fixed position for subtitle */}
-              <div className="min-h-[40px] flex items-center">
+              <div className="min-h-[30px] md:min-h-[40px] flex items-center">
                 {step3Animation.displayedTexts[1] && (
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-lg md:text-xl font-semibold text-white">
                     {step3Animation.displayedTexts[1]}
                     {step3Animation.currentStep === 1 && !step3Animation.isComplete && (
                       <span className="animate-pulse">|</span>
@@ -283,12 +283,12 @@ export default function LandingPage() {
               </div>
               
               {/* Fixed positions for bullet points */}
-              <ul className="text-gray-300 space-y-3">
-                <div className="min-h-[48px] flex items-start">
+              <ul className="text-gray-300 space-y-2 md:space-y-3">
+                <div className="min-h-[36px] md:min-h-[48px] flex items-start">
                   {step3Animation.displayedTexts[2] && (
                     <li className="flex items-start w-full">
                       <span className="text-indigo-400 mr-2">•</span>
-                      <span>
+                      <span className="text-sm md:text-base">
                         {step3Animation.displayedTexts[2]}
                         {step3Animation.currentStep === 2 && !step3Animation.isComplete && (
                           <span className="animate-pulse">|</span>
@@ -298,11 +298,11 @@ export default function LandingPage() {
                   )}
                 </div>
                 
-                <div className="min-h-[48px] flex items-start">
+                <div className="min-h-[36px] md:min-h-[48px] flex items-start">
                   {step3Animation.displayedTexts[3] && (
                     <li className="flex items-start w-full">
                       <span className="text-indigo-400 mr-2">•</span>
-                      <span>
+                      <span className="text-sm md:text-base">
                         {step3Animation.displayedTexts[3]}
                         {step3Animation.currentStep === 3 && !step3Animation.isComplete && (
                           <span className="animate-pulse">|</span>
@@ -312,11 +312,11 @@ export default function LandingPage() {
                   )}
                 </div>
                 
-                <div className="min-h-[48px] flex items-start">
+                <div className="min-h-[36px] md:min-h-[48px] flex items-start">
                   {step3Animation.displayedTexts[4] && (
                     <li className="flex items-start w-full">
                       <span className="text-indigo-400 mr-2">•</span>
-                      <span>
+                      <span className="text-sm md:text-base">
                         {step3Animation.displayedTexts[4]}
                         {step3Animation.currentStep === 4 && !step3Animation.isComplete && (
                           <span className="animate-pulse">|</span>
@@ -365,32 +365,36 @@ export default function LandingPage() {
   }, [step, step1Animation.isComplete, step2Animation.isComplete, step3Animation.isComplete]);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="max-w-lg mx-auto w-full space-y-8">
-        {/* App Name Header */}
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-light text-gray-400 tracking-wide">Think Clear</h1>
-        </div>
-
-        {/* Skip Animation Button */}
-        {isAnimating && (
-          <div className="flex justify-end">
-            <button
-              onClick={handleSkipAnimation}
-              className="text-gray-500 hover:text-gray-300 text-sm transition-colors duration-200"
-            >
-              Skip ⏵
-            </button>
+    <div className="min-h-screen bg-black flex flex-col">
+      <div className="flex-1 flex flex-col justify-between p-4">
+        <div className="max-w-lg mx-auto w-full flex flex-col flex-1">
+          {/* App Name Header */}
+          <div className="text-center mb-4">
+            <h1 className="text-2xl font-light text-gray-400 tracking-wide">Think Clear</h1>
           </div>
-        )}
-        
-        {renderProgressDots()}
-        
-        <div className="min-h-[500px] flex flex-col justify-start">
-          {renderStepContent()}
+
+          {/* Skip Animation Button */}
+          {isAnimating && (
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={handleSkipAnimation}
+                className="text-gray-500 hover:text-gray-300 text-sm transition-colors duration-200"
+              >
+                Skip ⏵
+              </button>
+            </div>
+          )}
+          
+          {renderProgressDots()}
+          
+          {/* Dynamic content area that grows with available space */}
+          <div className="flex-1 flex flex-col justify-center space-y-4 md:space-y-8">
+            {renderStepContent()}
+          </div>
         </div>
         
-        <div className="pt-8">
+        {/* Action buttons always visible at bottom */}
+        <div className="max-w-lg mx-auto w-full pt-4 pb-safe">
           {showNextButton && step === 3 && (
             <p className="text-sm text-gray-400 text-center mb-4 px-4">
               Your privacy matters most: your voice footprint and personal data will never be shared or sold to any third party without your consent.
