@@ -2,7 +2,7 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/contexts/SessionContext";
-import { useSequentialTypewriter, useSequentialWordTypewriter } from "@/hooks/useTypewriter";
+import { useSequentialTypewriter } from "@/hooks/useTypewriter";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -70,12 +70,12 @@ export default function LandingPage() {
   const step1Texts = [
     "Hello thinker",
     "I'm really glad you are here.",
-    "Thanks not just for your time, but also for your TRUST. That means a lot."
+    "Thanks not just for your time, but also for your <span class='text-white font-semibold'>TRUST</span>. That means a lot."
   ];
 
   const step2Texts = [
     "Who you will meet here?",
-    "Think Clear, an AI thinking buddy who talk things through with you by ASKing you questions, to assist you reflect, aware, and change, just like a human coach will do.",
+    "Think Clear, an AI thinking buddy who talk things through with you by <span class='text-indigo-400 font-semibold'>ASKing</span> you questions, to assist you reflect, aware, and change, just like a human coach will do.",
     "What you will NOT get here?",
     "Another AI to give you spoon feed answer",
     "A magic, one-click cure", 
@@ -101,10 +101,10 @@ export default function LandingPage() {
     }
   });
 
-  const step2Animation = useSequentialWordTypewriter({
+  const step2Animation = useSequentialTypewriter({
     texts: step === 2 ? step2Texts : [],
-    speed: 200, // milliseconds per word (faster than character speed)
-    delayBetween: 600,
+    speed: 35, // milliseconds per character (same as step 3)
+    delayBetween: 500,
     initialDelay: 300,
     onAllComplete: () => {
       if (step === 2) setShowNextButton(true);
@@ -156,14 +156,7 @@ export default function LandingPage() {
             <div className="min-h-[60px] flex items-center justify-center">
               {step1Animation.displayedTexts[2] && (
                 <p className="text-xl text-gray-300 leading-relaxed">
-                  {step1Animation.displayedTexts[2].includes("TRUST") ? (
-                    <>
-                      Thanks not just for your time, but also for your{" "}
-                      <span className="text-white font-semibold">TRUST</span>. That means a lot.
-                    </>
-                  ) : (
-                    step1Animation.displayedTexts[2]
-                  )}
+                  <span dangerouslySetInnerHTML={{ __html: step1Animation.displayedTexts[2] }} />
                   {step1Animation.currentStep === 2 && !step1Animation.isComplete && (
                     <span className="animate-pulse">|</span>
                   )}
@@ -192,15 +185,7 @@ export default function LandingPage() {
             <div className="min-h-[100px] flex items-center justify-center">
               {step2Animation.displayedTexts[1] && (
                 <p className="text-lg text-gray-300 leading-relaxed">
-                  {step2Animation.displayedTexts[1].includes("ASKing") ? (
-                    <>
-                      Think Clear, an AI thinking buddy who talk things through with you by{" "}
-                      <span className="text-indigo-400 font-semibold">ASKing</span> you questions, 
-                      to assist you reflect, aware, and change, just like a human coach will do.
-                    </>
-                  ) : (
-                    step2Animation.displayedTexts[1]
-                  )}
+                  <span dangerouslySetInnerHTML={{ __html: step2Animation.displayedTexts[1] }} />
                   {step2Animation.currentStep === 1 && !step2Animation.isComplete && (
                     <span className="animate-pulse">|</span>
                   )}
