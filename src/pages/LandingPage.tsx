@@ -380,46 +380,40 @@ export default function LandingPage() {
   }, [step, step1Animation.isComplete, step2Animation.isComplete, step3Animation.isComplete]);
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] flex flex-col">
-      {/* Responsive container for landing content */}
-      <div className="w-full max-w-lg mx-auto flex-1 flex flex-col justify-center p-4 sm:p-6">
-        {/* Progress indicator */}
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="max-w-lg mx-auto w-full space-y-8">
+        {/* App Name Header */}
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-light text-gray-400 tracking-wide">Think Clear</h1>
+        </div>
+
+        {/* Skip Animation Button */}
+        {isAnimating && (
+          <div className="flex justify-end">
+            <button
+              onClick={handleSkipAnimation}
+              className="text-gray-500 hover:text-gray-300 text-sm transition-colors duration-200"
+            >
+              Skip ⏵
+            </button>
+          </div>
+        )}
+        
         {renderProgressDots()}
         
-        {/* Content sections */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full max-w-md">
-            {renderStepContent()}
-          </div>
+        <div className="min-h-[500px] flex flex-col justify-start">
+          {renderStepContent()}
         </div>
         
-        {/* Navigation buttons */}
-        <div className="flex flex-col items-center mt-8 space-y-4">
-          {/* Skip animation button */}
-          <Button
-            onClick={handleSkipAnimation}
-            variant="ghost"
-            className="text-gray-400 hover:text-white text-sm underline hover:bg-transparent"
-          >
-            Skip introduction
-          </Button>
-          
-          {/* Main action button */}
+        <div className="pt-8">
           {showNextButton && (
             <Button 
-              onClick={handleNext} 
+              onClick={handleNext}
               size="lg" 
-              className="w-full max-w-xs py-4 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
+              className="w-full py-6 px-8 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-medium rounded-xl transition-opacity duration-300"
               disabled={isLoading}
             >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Starting...</span>
-                </div>
-              ) : (
-                step < 3 ? "Continue" : "Start Your Journey"
-              )}
+              {step === 3 ? (isLoading ? "Starting..." : "Let's go") : "Next"}
             </Button>
           )}
         </div>

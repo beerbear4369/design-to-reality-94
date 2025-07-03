@@ -32,7 +32,7 @@ export function ThinkClear() {
   const [appState, setAppState] = React.useState<AppState>("idle");
   const [isRecording, setIsRecording] = React.useState(false);
   const [isAISpeaking, setIsAISpeaking] = React.useState(false);
-  const [currentMessage, setCurrentMessage] = React.useState("I'm here to help you think clearly and move forward. \nNot by giving advice, but by asking questions and supporting your thinking.\nWhat would you like to discuss today?");
+  const [currentMessage, setCurrentMessage] = React.useState("I’m here to help you think clearly and move forward. \nNot by giving advice, but by asking questions and supporting your thinking.\nWhat would you like to discuss today?");
   const [error, setError] = React.useState<string | null>(null);
   
   // End conversation dialog state
@@ -333,7 +333,7 @@ export function ThinkClear() {
 
   return (
     <main 
-      className="w-full flex flex-col items-center justify-between min-h-full py-8 relative"
+      className="bg-black flex max-w-[400px] w-full flex-col overflow-hidden items-center mx-auto py-[40px] min-h-screen relative"
       onClick={handleEnableAudio}
     >
       {/* End Conversation Button - Top Right */}
@@ -373,18 +373,18 @@ export function ThinkClear() {
         </AlertDialog>
       </div>
 
-      <header className="text-white text-2xl sm:text-3xl font-semibold tracking-wide text-center">
+      <header className="text-white text-[28px] font-semibold tracking-wide">
         Think Clear
       </header>
       
       <section className="flex flex-col items-center justify-between w-full flex-1">
-        <h2 className="text-white text-base sm:text-lg font-normal mt-6 sm:mt-8 opacity-90 text-center px-4">
+        <h2 className="text-white text-lg font-normal mt-[32px] opacity-90">
           {appState === "session-ended" ? "Session Complete" : "Speak to your coach"}
         </h2>
         
         {/* Voice visualization */}
-        <div className="w-full flex justify-center mt-6 sm:mt-8">
-          <div className="w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] relative">
+        <div className="w-full flex justify-center mt-[30px]">
+          <div className="w-[300px] h-[300px] relative">
             <VoiceVisualization 
               isRecording={isRecording || isAISpeaking} 
               audioLevel={isRecording ? micAudioLevel : aiAudioLevel}
@@ -397,7 +397,7 @@ export function ThinkClear() {
         <ThinkingIndicator isThinking={appState === "processing"} />
         
         {/* Message container */}
-        <div className="min-h-[80px] sm:min-h-[100px] flex items-center justify-center w-full px-4 sm:px-6 mt-4 sm:mt-6">
+        <div className="min-h-[100px] flex items-center justify-center w-full px-6 mt-[20px]">
           <AIMessage 
             message={getDisplayMessage()}
             isTyping={shouldShowTyping}
@@ -405,7 +405,7 @@ export function ThinkClear() {
         </div>
         
         {/* Recording button - disabled when session ended */}
-        <div className="mb-8 sm:mb-12 mt-4 sm:mt-6">
+        <div className="mb-[50px] mt-[20px]">
           <RecordingButton 
             onRecordingChange={handleRecordingStateChange}
             onAudioComplete={handleAudioComplete}

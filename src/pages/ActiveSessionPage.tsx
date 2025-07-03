@@ -39,11 +39,8 @@ export default function ActiveSessionPage() {
   }, [sessionId, contextSessionId, startSession, navigate, syncAttempted]);
   
   return (
-    <div className="min-h-screen bg-[#0D0D0D] flex flex-col">
-      {/* Responsive container for conversation interface */}
-      <div className="w-full max-w-md mx-auto flex-1 flex flex-col justify-center p-4 sm:p-6">
-        <ThinkClear />
-      </div>
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center">
+      <ThinkClear />
     </div>
   );
 } 
