@@ -21,18 +21,27 @@ import {
 } from "@/components/ui/alert-dialog";
 import { X } from "lucide-react";
 
+// Welcome messages with call to action  
+const WELCOME_MESSAGES = [
+  "Hey there, what's on your mind today? Click the button below to start talking to Kuku!",
+  "Hello! I'm here to listen, what would you like to talk about? Just click the button below to start talking to Kuku!",
+  "Hi! Ready to share what's going through your mind? Click the button below to start talking to Kuku!",
+  "Welcome! What's been on your thoughts lately? Click the button below to start talking to Kuku!",
+  "Good to see you! What would you like to explore today? Click the button below to start talking to Kuku!"
+];
+
 // Simple state for the entire conversation flow
-type AppState = "idle" | "recording" | "processing" | "responding" | "session-ended" | "error";
+type AppState = "welcome" | "idle" | "recording" | "processing" | "responding" | "session-ended" | "error";
 
 export function ThinkClear() {
   // Navigation hook for automatic session ending
   const navigate = useNavigate();
   
   // Simplified state - everything in one place
-  const [appState, setAppState] = React.useState<AppState>("idle");
+  const [appState, setAppState] = React.useState<AppState>("welcome");
   const [isRecording, setIsRecording] = React.useState(false);
   const [isAISpeaking, setIsAISpeaking] = React.useState(false);
-  const [currentMessage, setCurrentMessage] = React.useState("Hey there, What's in your mind today? Click the button below to start talk with me whenever you're ready");
+  const [currentMessage, setCurrentMessage] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   
   // End conversation dialog state
@@ -54,6 +63,52 @@ export function ThinkClear() {
     audioLevel: aiAudioLevel,
     frequencyData: aiFrequencyData,
   } = useAudioLevel({ audioElement: audioPlayerRef.current });
+
+  // Welcome message effect - runs once on component mount
+  React.useEffect(() => {
+    // Only run welcome if we're in welcome state
+    if (appState !== "welcome") return;
+    
+    console.log('🎵 Starting welcome message...');
+    
+    // Select random welcome message
+    const randomIndex = Math.floor(Math.random() * WELCOME_MESSAGES.length);
+    const welcomeMessage = WELCOME_MESSAGES[randomIndex];
+    const welcomeAudioUrl = `/welcome-audio/welcome-${randomIndex + 1}.mp3`;
+    
+    console.log(`🎵 Selected welcome message ${randomIndex + 1}: "${welcomeMessage.substring(0, 50)}..."`);
+    
+    // Set the welcome message text
+    setCurrentMessage(welcomeMessage);
+    setError(null);
+    
+    // Play welcome audio after a short delay
+    const welcomeTimeout = setTimeout(() => {
+      console.log(`🎵 Playing welcome audio: ${welcomeAudioUrl}`);
+      
+      // Use existing playAIAudio function with the welcome audio
+      playAIAudio(welcomeAudioUrl);
+      
+      // Set up audio end handler for welcome specifically
+      if (audioPlayerRef.current) {
+        const originalOnEnded = audioPlayerRef.current.onended;
+        audioPlayerRef.current.onended = () => {
+          console.log('🎵 Welcome message finished, transitioning to idle state');
+          setAppState("idle");
+          setIsAISpeaking(false);
+          // Restore original handler for future AI responses
+          if (audioPlayerRef.current) {
+            audioPlayerRef.current.onended = originalOnEnded;
+          }
+        };
+      }
+    }, 500); // Short delay to let component render
+    
+    // Cleanup timeout on unmount
+    return () => {
+      clearTimeout(welcomeTimeout);
+    };
+  }, [appState]); // Only depend on appState
 
   // Handle ending session manually
   const handleEndSession = React.useCallback(async () => {
@@ -319,7 +374,7 @@ export function ThinkClear() {
   const shouldShowTyping = appState === "responding" || appState === "session-ended";
 
   // Determine if recording should be disabled
-  const isRecordingDisabled = appState === "processing" || appState === "session-ended";
+  const isRecordingDisabled = appState === "processing" || appState === "session-ended" || appState === "welcome";
 
   // Cleanup on unmount
   React.useEffect(() => {
