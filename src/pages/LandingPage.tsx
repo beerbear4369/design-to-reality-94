@@ -74,7 +74,7 @@ export default function LandingPage() {
               Who you will meet here?
             </h1>
             <p className="text-lg text-gray-300 leading-relaxed mb-6">
-              Kuku, an AI thinking buddy who talk things through with you by <span className="text-indigo-400 font-semibold">ASKing</span> you questions, 
+              Think Clear, an AI thinking buddy who talk things through with you by <span className="text-indigo-400 font-semibold">ASKing</span> you questions, 
               to assist you reflect, aware, and change, just like a human coach will do.
             </p>
             
@@ -137,6 +137,11 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="max-w-lg mx-auto w-full space-y-8">
+        {/* App Name Header */}
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-light text-gray-400 tracking-wide">Think Clear</h1>
+        </div>
+        
         {renderProgressDots()}
         
         <div className="min-h-[400px] flex flex-col justify-center">

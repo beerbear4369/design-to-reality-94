@@ -209,7 +209,7 @@ export default function SessionHistoryPage() {
                         {/* Message Header - Compact for Mobile */}
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-medium opacity-80">
-                            {message.sender === 'user' ? 'You' : 'Kuku Coach'}
+                            {message.sender === 'user' ? 'You' : 'Think Clear'}
                           </span>
                           <span className="text-xs opacity-50">
                             {new Date(message.timestamp).toLocaleTimeString([], { 

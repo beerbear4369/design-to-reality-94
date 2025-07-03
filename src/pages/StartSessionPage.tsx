@@ -28,7 +28,7 @@ export default function StartSessionPage() {
   return (
     <div className="min-h-screen bg-black flex items-start md:items-center justify-start md:justify-center p-4">
       <div className="max-w-md w-full flex flex-col items-start mt-24 md:mt-0 md:ml-16 space-y-6">
-        <h1 className="text-4xl font-bold text-white">Kuku Coach</h1>
+        <h1 className="text-4xl font-bold text-white">Think Clear</h1>
         <p className="text-xl text-gray-300">Your AI Coaching Assistant</p>
         
         <Button 

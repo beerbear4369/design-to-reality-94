@@ -1,7 +1,7 @@
-# Kuku Coach - AI Voice Coaching Assistant
+# Think Clear - AI Voice Coaching Assistant
 
 ## Overview
-Kuku Coach is an AI-powered voice coaching assistant that provides personal development and mental health support through natural voice interactions. The application features real-time voice processing, dynamic audio visualizations, and seamless conversation flow.
+Think Clear is an AI-powered voice coaching assistant that provides personal development and mental health support through natural voice interactions. The application features real-time voice processing, dynamic audio visualizations, and seamless conversation flow.
 
 ## Development Setup
 
@@ -102,4 +102,4 @@ The application supports both mock and production API backends:
 
 ## License
 
-This project is proprietary software developed for Kuku Coach.
+This project is proprietary software developed for Think Clear.

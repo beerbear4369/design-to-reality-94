@@ -4,7 +4,7 @@
  */
 
 // Constants
-const STORAGE_PREFIX = 'kuku-coach:';
+const STORAGE_PREFIX = 'think-clear:';
 const CONVERSATION_KEY = `${STORAGE_PREFIX}conversations`;
 const SESSION_LIST_KEY = `${STORAGE_PREFIX}session-list`;
 

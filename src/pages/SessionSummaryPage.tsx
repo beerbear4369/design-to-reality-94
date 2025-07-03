@@ -44,7 +44,7 @@ export default function SessionSummaryPage() {
         timestamp: Date.now()
       };
       
-      const storageKey = `kuku-coach:summary:${sessionId}`;
+      const storageKey = `think-clear:summary:${sessionId}`;
       localStorage.setItem(storageKey, JSON.stringify(summaryData));
       console.log('📝 Persisted summary data for session:', sessionId);
     }
@@ -55,7 +55,7 @@ export default function SessionSummaryPage() {
     if (!sessionId) return null;
     
     try {
-      const storageKey = `kuku-coach:summary:${sessionId}`;
+      const storageKey = `think-clear:summary:${sessionId}`;
       const stored = localStorage.getItem(storageKey);
       if (stored) {
         const data: PersistedSummaryData = JSON.parse(stored);
@@ -107,7 +107,7 @@ export default function SessionSummaryPage() {
     console.log('📝 Using default summary message');
     return {
       isStructured: false,
-      content: "Thank you for your coaching session with Kuku Coach. We hope you found it helpful and gained valuable insights.",
+      content: "Thank you for your coaching session with Think Clear. We hope you found it helpful and gained valuable insights.",
       sections: []
     };
   }, [locationState, sessionId]);
@@ -215,7 +215,7 @@ export default function SessionSummaryPage() {
     try {
       // Clean up persisted summary data when starting new session
       if (sessionId) {
-        const storageKey = `kuku-coach:summary:${sessionId}`;
+        const storageKey = `think-clear:summary:${sessionId}`;
         localStorage.removeItem(storageKey);
       }
       

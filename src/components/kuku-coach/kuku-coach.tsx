@@ -24,7 +24,7 @@ import { X } from "lucide-react";
 // Simple state for the entire conversation flow
 type AppState = "idle" | "recording" | "processing" | "responding" | "session-ended" | "error";
 
-export function KukuCoach() {
+export function ThinkClear() {
   // Navigation hook for automatic session ending
   const navigate = useNavigate();
   
@@ -374,7 +374,7 @@ export function KukuCoach() {
       </div>
 
       <header className="text-white text-[28px] font-semibold tracking-wide">
-        Kuku Coach
+        Think Clear
       </header>
       
       <section className="flex flex-col items-center justify-between w-full flex-1">

@@ -1,6 +1,6 @@
 /**
  * API Client Types
- * Defines interfaces and types for the Kuku Coach API
+ * Defines interfaces and types for the Think Clear API
  */
 
 // Base API response type
@@ -121,7 +121,7 @@ export interface BackendApiClient {
 }
 
 // Main API client interface (existing - kept for compatibility)
-export interface KukuCoachApiClient {
+export interface ThinkClearApiClient {
   // Session Management
   createSession(): Promise<SessionResponse>;
   getSession(sessionId: string): Promise<SessionResponse>;

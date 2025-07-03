@@ -1,11 +1,11 @@
 /**
  * Mock API Client
- * Implements the KukuCoachApiClient interface for local development and testing
+ * Implements the ThinkClearApiClient interface for local development and testing
  */
 
 import { delay } from '../index';
 import { 
-  KukuCoachApiClient, 
+  ThinkClearApiClient, 
   ApiClientConfig,
   SessionResponse,
   SummaryResponse,
@@ -20,7 +20,7 @@ import {
 } from '../types';
 
 // Local storage keys for persistence
-const STORAGE_PREFIX = 'kuku-coach:';
+const STORAGE_PREFIX = 'think-clear:';
 const SESSIONS_KEY = `${STORAGE_PREFIX}sessions`;
 const AUTH_KEY = `${STORAGE_PREFIX}auth`;
 
@@ -81,7 +81,7 @@ const getSession = (sessionId: string): any => {
   return sessions[sessionId];
 };
 
-export class MockApiClient implements KukuCoachApiClient {
+export class MockApiClient implements ThinkClearApiClient {
   private config: ApiClientConfig;
   private isAuthenticated: boolean = false;
   private currentUser: any = null;

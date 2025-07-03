@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { KukuCoach } from "@/components/kuku-coach";
+import { ThinkClear } from "@/components/kuku-coach";
 import { useSession } from "@/contexts/SessionContext";
 
 export default function ActiveSessionPage() {
@@ -40,7 +40,7 @@ export default function ActiveSessionPage() {
   
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center">
-      <KukuCoach />
+      <ThinkClear />
     </div>
   );
 } 

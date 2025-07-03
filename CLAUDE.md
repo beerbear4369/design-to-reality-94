@@ -56,7 +56,7 @@ node scripts/verify-deployment.js         # Verify deployment readiness
 ## Project-Specific Conventions
 
 ### File Organization
-- Kuku Coach components: `src/components/kuku-coach/`
+- Think Clear components: `src/components/kuku-coach/`
 - Hooks: `src/hooks/` (names start with `use`)
 - Pages: `src/pages/` (names end with `Page.tsx`)
 - Services: `src/services/` (organized by function type)
