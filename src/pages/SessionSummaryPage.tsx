@@ -253,7 +253,7 @@ export default function SessionSummaryPage() {
   };
   
   return (
-    <div className="min-h-screen bg-[#0D0D0D] flex flex-col">
+    <div className="min-h-screen supports-[height:100dvh]:min-h-[100dvh] bg-[#0D0D0D] flex flex-col">
       <div className="flex-1 flex flex-col justify-between p-4">
         <div className="max-w-2xl w-full mx-auto flex flex-col flex-1">
           <div className="text-center pt-4 pb-6">

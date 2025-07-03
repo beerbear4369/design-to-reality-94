@@ -39,7 +39,7 @@ export default function ActiveSessionPage() {
   }, [sessionId, contextSessionId, startSession, navigate, syncAttempted]);
   
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen supports-[height:100dvh]:min-h-[100dvh] bg-black flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
           <ThinkClear />

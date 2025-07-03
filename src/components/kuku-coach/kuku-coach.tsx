@@ -333,7 +333,7 @@ export function ThinkClear() {
 
   return (
     <main 
-      className="bg-black min-h-screen flex flex-col max-w-[400px] w-full mx-auto relative overflow-hidden"
+      className="bg-black min-h-screen supports-[height:100dvh]:min-h-[100dvh] flex flex-col max-w-[400px] w-full mx-auto relative overflow-hidden"
       onClick={handleEnableAudio}
     >
       {/* End Conversation Button - Top Right with touch-friendly sizing */}

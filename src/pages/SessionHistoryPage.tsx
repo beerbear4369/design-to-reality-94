@@ -118,7 +118,7 @@ export default function SessionHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] pb-6">
+    <div className="min-h-screen supports-[height:100dvh]:min-h-[100dvh] bg-[#0D0D0D] pb-6">
       {/* Mobile-Optimized Container */}
       <div className="w-full max-w-lg mx-auto">
         

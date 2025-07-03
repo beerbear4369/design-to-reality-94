@@ -365,7 +365,7 @@ export default function LandingPage() {
   }, [step, step1Animation.isComplete, step2Animation.isComplete, step3Animation.isComplete]);
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen supports-[height:100dvh]:min-h-[100dvh] bg-black flex flex-col">
       <div className="flex-1 flex flex-col justify-between p-4">
         <div className="max-w-lg mx-auto w-full flex flex-col flex-1">
           {/* App Name Header */}
