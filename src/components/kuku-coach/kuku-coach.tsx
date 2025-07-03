@@ -32,7 +32,7 @@ export function ThinkClear() {
   const [appState, setAppState] = React.useState<AppState>("idle");
   const [isRecording, setIsRecording] = React.useState(false);
   const [isAISpeaking, setIsAISpeaking] = React.useState(false);
-  const [currentMessage, setCurrentMessage] = React.useState("I’m here to help you think clearly and move forward. \nNot by giving advice, but by asking questions and supporting your thinking.\nWhat would you like to discuss today?");
+  const [currentMessage, setCurrentMessage] = React.useState("Hey there, What's in your mind today? Click the button below to start talk with me whenever you're ready");
   const [error, setError] = React.useState<string | null>(null);
   
   // End conversation dialog state
