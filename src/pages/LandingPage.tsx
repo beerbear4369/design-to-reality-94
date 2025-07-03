@@ -75,7 +75,7 @@ export default function LandingPage() {
 
   const step2Texts = [
     "Who you will meet here?",
-    "Think Clear, an AI thinking buddy who talk things through with you by <span class='text-indigo-400 font-semibold'>ASKing</span> you questions, to assist you reflect, aware, and change, just like a human coach will do.",
+    "Kuku, your AI thinking buddy who talk things through with you by <span class='text-indigo-400 font-semibold'>ASKing</span> you questions, to assist you reflect, aware, and change, just like a human coach will do.",
     "What you will NOT get here?",
     "Another AI to give you spoon feed answer",
     "A magic, one-click cure", 
