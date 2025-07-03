@@ -333,21 +333,21 @@ export function ThinkClear() {
 
   return (
     <main 
-      className="bg-black flex max-w-[400px] w-full flex-col overflow-hidden items-center mx-auto py-[40px] min-h-screen relative"
+      className="bg-black min-h-screen flex flex-col max-w-[400px] w-full mx-auto relative overflow-hidden"
       onClick={handleEnableAudio}
     >
-      {/* End Conversation Button - Top Right */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* End Conversation Button - Top Right with touch-friendly sizing */}
+      <div className="absolute top-[2vh] right-[4vw] z-10">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 text-white hover:bg-white/10 hover:text-white"
+              className="h-[max(48px,6vh)] w-[max(48px,6vh)] text-white hover:bg-white/10 hover:text-white"
               disabled={appState === "session-ended"}
               title="End conversation"
             >
-              <X className="h-5 w-5" />
+              <X className="h-[max(24px,3vh)] w-[max(24px,3vh)]" />
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent className="bg-gray-900 border-gray-700">
@@ -373,39 +373,51 @@ export function ThinkClear() {
         </AlertDialog>
       </div>
 
-      <header className="text-white text-[28px] font-semibold tracking-wide">
-        Think Clear
+      {/* Header Section - Fixed size */}
+      <header className="flex-none pt-[2vh] pb-[1vh] text-center">
+        <h1 className="text-white text-[clamp(24px,5vw,28px)] font-semibold tracking-wide">
+          Think Clear
+        </h1>
       </header>
       
-      <section className="flex flex-col items-center justify-between w-full flex-1">
-        <h2 className="text-white text-lg font-normal mt-[32px] opacity-90">
-          {appState === "session-ended" ? "Session Complete" : "Speak to your coach"}
-        </h2>
+      {/* Main Content Section - Flexible */}
+      <section className="flex-1 flex flex-col justify-between px-[4vw]">
+        {/* Subtitle */}
+        <div className="flex-none pt-[3vh]">
+          <h2 className="text-white text-[clamp(16px,4vw,18px)] font-normal text-center opacity-90">
+            {appState === "session-ended" ? "Session Complete" : "Speak to your coach"}
+          </h2>
+        </div>
         
-        {/* Voice visualization */}
-        <div className="w-full flex justify-center mt-[30px]">
-          <div className="w-[300px] h-[300px] relative">
-            <VoiceVisualization 
-              isRecording={isRecording || isAISpeaking} 
-              audioLevel={isRecording ? micAudioLevel : aiAudioLevel}
-              frequencyData={isRecording ? micFrequencyData : aiFrequencyData}
+        {/* Central Content Area - Flexible */}
+        <div className="flex-1 flex flex-col justify-center space-y-[2vh] items-center">
+          {/* Voice visualization */}
+          <div className="flex justify-center">
+            <div className="w-[min(70vw,280px)] h-[min(70vw,280px)] relative">
+              <VoiceVisualization 
+                isRecording={isRecording || isAISpeaking} 
+                audioLevel={isRecording ? micAudioLevel : aiAudioLevel}
+                frequencyData={isRecording ? micFrequencyData : aiFrequencyData}
+              />
+            </div>
+          </div>
+          
+          {/* Thinking indicator */}
+          <div className="flex justify-center">
+            <ThinkingIndicator isThinking={appState === "processing"} />
+          </div>
+          
+          {/* Message container */}
+          <div className="min-h-[8vh] max-h-[20vh] flex items-center justify-center w-full overflow-y-auto">
+            <AIMessage 
+              message={getDisplayMessage()}
+              isTyping={shouldShowTyping}
             />
           </div>
         </div>
         
-        {/* Thinking indicator */}
-        <ThinkingIndicator isThinking={appState === "processing"} />
-        
-        {/* Message container */}
-        <div className="min-h-[100px] flex items-center justify-center w-full px-6 mt-[20px]">
-          <AIMessage 
-            message={getDisplayMessage()}
-            isTyping={shouldShowTyping}
-          />
-        </div>
-        
-        {/* Recording button - disabled when session ended */}
-        <div className="mb-[50px] mt-[20px]">
+        {/* Recording button - Fixed at bottom */}
+        <div className="flex-none pb-[6vh] flex justify-center">
           <RecordingButton 
             onRecordingChange={handleRecordingStateChange}
             onAudioComplete={handleAudioComplete}
