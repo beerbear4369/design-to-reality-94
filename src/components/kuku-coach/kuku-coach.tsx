@@ -6,7 +6,20 @@ import { VoiceVisualization } from "./voice-visualization";
 import { ThinkingIndicator } from "./thinking-indicator";
 import { useAudioLevel } from "@/hooks/use-audio-level";
 import { useSession } from "@/contexts/SessionContext";
-import { sendAudio } from "@/services/api/session";
+import { sendAudio, endSession } from "@/services/api/session";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { X } from "lucide-react";
 
 // Simple state for the entire conversation flow
 type AppState = "idle" | "recording" | "processing" | "responding" | "session-ended" | "error";
@@ -21,6 +34,9 @@ export function KukuCoach() {
   const [isAISpeaking, setIsAISpeaking] = React.useState(false);
   const [currentMessage, setCurrentMessage] = React.useState("I’m here to help you think clearly and move forward. \nNot by giving advice, but by asking questions and supporting your thinking.\nWhat would you like to discuss today?");
   const [error, setError] = React.useState<string | null>(null);
+  
+  // End conversation dialog state
+  const [isEndingSession, setIsEndingSession] = React.useState(false);
   
   // Audio player ref
   const audioPlayerRef = React.useRef<HTMLAudioElement | null>(null);
@@ -38,6 +54,49 @@ export function KukuCoach() {
     audioLevel: aiAudioLevel,
     frequencyData: aiFrequencyData,
   } = useAudioLevel({ audioElement: audioPlayerRef.current });
+
+  // Handle ending session manually
+  const handleEndSession = React.useCallback(async () => {
+    if (!session.sessionId || isEndingSession) return;
+    
+    console.log('🛑 User manually ending session:', session.sessionId);
+    setIsEndingSession(true);
+    
+    try {
+      // Stop any ongoing audio first
+      if (audioPlayerRef.current && !audioPlayerRef.current.paused) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.currentTime = 0;
+      }
+      
+      // Set ending state
+      setAppState("session-ended");
+      setCurrentMessage("Ending session...");
+      setError(null);
+      
+      // Call backend to end session
+      const response = await endSession(session.sessionId);
+      
+      console.log('✅ Session ended successfully:', response.summaryText);
+      
+      // Navigate to summary page with manual ending flag
+      navigate(`/summary/${session.sessionId}`, {
+        state: { 
+          autoEnded: false,
+          finalSummary: response.summaryText,
+          lastMessage: "Session ended by user",
+          manualEnd: true
+        }
+      });
+      
+    } catch (err) {
+      console.error('❌ Error ending session:', err);
+      setError(err instanceof Error ? err.message : "Failed to end session");
+      setAppState("idle");
+    } finally {
+      setIsEndingSession(false);
+    }
+  }, [session.sessionId, navigate, isEndingSession]);
 
   // Handle recording state changes
   const handleRecordingStateChange = React.useCallback((recording: boolean) => {
@@ -274,9 +333,46 @@ export function KukuCoach() {
 
   return (
     <main 
-      className="bg-black flex max-w-[400px] w-full flex-col overflow-hidden items-center mx-auto py-[40px] min-h-screen"
+      className="bg-black flex max-w-[400px] w-full flex-col overflow-hidden items-center mx-auto py-[40px] min-h-screen relative"
       onClick={handleEnableAudio}
     >
+      {/* End Conversation Button - Top Right */}
+      <div className="absolute top-4 right-4 z-10">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 text-white hover:bg-white/10 hover:text-white"
+              disabled={appState === "session-ended"}
+              title="End conversation"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-gray-900 border-gray-700">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">End Conversation?</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-300">
+                Are you sure you want to end this session? Once ended, you'll be taken to the summary page. You cannot continue this session after ending it.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-gray-700 text-white hover:bg-gray-600 border-gray-600">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleEndSession}
+                disabled={isEndingSession}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                {isEndingSession ? "Ending..." : "Yes, End Session"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
       <header className="text-white text-[28px] font-semibold tracking-wide">
         Kuku Coach
       </header>

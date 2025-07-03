@@ -203,9 +203,16 @@ export async function getHistory(sessionId: string): Promise<HistoryResponse> {
 export async function endSession(sessionId: string): Promise<EndSessionResponse> {
   console.log(`API: Ending session: ${sessionId}`);
   
-  // TODO: Implement backend endpoint for ending sessions
-  // For now, return a simple response
-  return {
-    summaryText: "Session ended successfully. Backend session termination endpoint not yet implemented."
-  };
+  try {
+    // Call the backend to end the session
+    const result = await apiClient.endSession(sessionId);
+    console.log('API: Session ended successfully');
+    
+    return {
+      summaryText: result.finalSummary || result.summaryText
+    };
+  } catch (error) {
+    console.error('API: Session ending failed:', error);
+    throw error;
+  }
 } 

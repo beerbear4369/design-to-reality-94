@@ -56,10 +56,13 @@ export default function LandingPage() {
           <div className="text-center space-y-6">
             <div className="text-6xl mb-4">👋</div>
             <h1 className="text-3xl font-bold text-white mb-4">
-              Hey, thinker
+              Hello thinker
             </h1>
             <p className="text-xl text-gray-300 leading-relaxed">
-              Really glad you're here—and thanks for trusting Kuku Coach with your next big thought.
+              I'm really glad you are here.
+            </p>
+            <p className="text-xl text-gray-300 leading-relaxed">
+              Thanks not just for your time, but also for your <span className="text-white font-semibold">TRUST</span>. That means a lot.
             </p>
           </div>
         );
@@ -68,20 +71,21 @@ export default function LandingPage() {
         return (
           <div className="text-center space-y-6">
             <h1 className="text-3xl font-bold text-white mb-6">
-              Who you'll meet
+              Who you will meet here?
             </h1>
             <p className="text-lg text-gray-300 leading-relaxed mb-6">
-              I'm Kuku Coach, an AI buddy who'll ask the right questions, sit with the messy bits, and help you spot your own next move—just like a human coach would.
+              Kuku, an AI thinking buddy who talk things through with you by <span className="text-indigo-400 font-semibold">ASKing</span> you questions, 
+              to assist you reflect, aware, and change, just like a human coach will do.
             </p>
             
             <div className="text-left space-y-4">
               <h2 className="text-xl font-semibold text-white">
-                What I'm <em className="text-red-400">not</em>
+                What you will <em className="text-red-400">NOT</em> get here?
               </h2>
               <ul className="text-gray-300 space-y-2">
                 <li className="flex items-start">
                   <span className="text-red-400 mr-2">•</span>
-                  A vending machine of perfect answers
+                  Another AI to give you spoon feed answer
                 </li>
                 <li className="flex items-start">
                   <span className="text-red-400 mr-2">•</span>
@@ -100,25 +104,25 @@ export default function LandingPage() {
         return (
           <div className="text-center space-y-6">
             <h1 className="text-3xl font-bold text-white mb-6">
-              Sound good? Let's get ready.
+              Sounds Good? Lets get ready!
             </h1>
             
             <div className="text-left space-y-4">
               <h2 className="text-xl font-semibold text-white">
-                Bring along:
+                All you need is
               </h2>
               <ul className="text-gray-300 space-y-3">
                 <li className="flex items-start">
                   <span className="text-indigo-400 mr-2">•</span>
-                  A tough decision, big goal, or stubborn challenge
+                  A tough decision, big goal, stubborn challenge or just a topic you really wanna to explore
                 </li>
                 <li className="flex items-start">
                   <span className="text-indigo-400 mr-2">•</span>
-                  20–30 distraction-free minutes with yourself
+                  20-30 minutes undisturbed time to be with yourself
                 </li>
                 <li className="flex items-start">
                   <span className="text-indigo-400 mr-2">•</span>
-                  An open mind (curiosity beats certainty here)
+                  A open mind to dive in to discovery mode.
                 </li>
               </ul>
             </div>

@@ -119,6 +119,44 @@ export class RealApiClient implements BackendApiClient {
   }
   
   /**
+   * End a session manually
+   */
+  async endSession(sessionId: string): Promise<{
+    summaryText: string;
+    finalSummary?: string;
+  }> {
+    try {
+      console.log(`Ending session: ${sessionId}`);
+
+      const response = await fetch(`${this.config.baseUrl}/sessions/${sessionId}/end`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to end session: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to end session');
+      }
+
+      console.log('Session ended successfully');
+      return {
+        summaryText: data.data.summary || 'Session ended successfully',
+        finalSummary: data.data.summary
+      };
+    } catch (error) {
+      console.error('Error ending session:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Health check endpoint
    */
   async healthCheck(): Promise<boolean> {
