@@ -53,7 +53,7 @@ async function generateWelcomeAudio() {
       // Generate speech using OpenAI TTS
       const mp3 = await openai.audio.speech.create({
         model: 'tts-1',
-        voice: 'alloy', // Can be: alloy, echo, fable, onyx, nova, shimmer
+        voice: 'nova', // Can be: alloy, echo, fable, onyx, nova, shimmer
         input: message,
         speed: 1.0 // Normal speed
       });
